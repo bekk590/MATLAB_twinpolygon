@@ -57,6 +57,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     l_seg = cell(5,1);
     w_seg = cell(5,1);
     disp('テストです');
+    disp('テストです');
     %disp(theta_seg{1});
 
    
