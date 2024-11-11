@@ -201,14 +201,20 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             y_cut = sprintf('%s + (%s - 2 * %s) * sin(%s) / 2 + %s', ...
                  y_seg{i}, l_seg{i}, dl_seg, theta_seg{i}, dy_cut);
             
-            i_cut = i+3;
+            if i == 3
+                i_cut = 6;
+                i_cl = 1;
+            else
+                i_cut = 7;
+                i_cl = 2;
+            %i_cut = i+3;
             segmentsString{i_cut} = sprintf('r%i',i_cut);
             segments{i_cut} = wp1.geom.feature.create(segmentsString{i_cut}, 'Rectangle');
             segments{i_cut}.set('size', {l_cut l_cut});
             segments{i_cut}.set('base', 'center');
             segments{i_cut}.set('pos', {x_cut y_cut});
             
-            i_cl = 1;
+            %i_cl = 1;
             if i_cl>0
                 x_cl = sprintf('%s + (%s - 2 * %s - %s) * cos(%s) / 2', ...
                     x_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i});
