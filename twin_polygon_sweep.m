@@ -206,7 +206,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
                 i_cl = 1;
             else
                 i_cut = 7;
-                i_cl = 2;
+                i_cl = 3;
             %i_cut = i+3;
             segmentsString{i_cut} = sprintf('r%i',i_cut);
             segments{i_cut} = wp1.geom.feature.create(segmentsString{i_cut}, 'Rectangle');
@@ -215,42 +215,42 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             segments{i_cut}.set('pos', {x_cut y_cut});
             
             %i_cl = 1;
-            if i_cl>0
-                x_cl = sprintf('%s + (%s - 2 * %s - %s) * cos(%s) / 2', ...
-                    x_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i});
-                y_cl = sprintf('%s + (%s - 2 * %s - %s) * sin(%s) / 2', ...
-                    y_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i});
-                l_cl = l_cut;
-                theta_cl = sprintf('fix(sqrt(2)*cos(%s)) * pi / 2', theta_mod);
-                if mod(eval(theta_mod),pi/4) < 1e-10
-                    theta_cl = 'pi/2';
-                end
-                
-                x1_cl = sprintf('%s - %s * sin(%s) / 2', x_cl, l_cl, theta_cl);
-                x2_cl = sprintf('%s + %s * sin(%s) / 2', x_cl, l_cl, theta_cl);
-                y1_cl = sprintf('%s - %s * cos(%s) / 2', y_cl, l_cl, theta_cl);
-                y2_cl = sprintf('%s + %s * cos(%s) / 2', y_cl, l_cl, theta_cl);
-                clamp_linesString{i_cl} = sprintf('ls%i',i_cl);
-                clamp_lines{i_cl} = wp1.geom.create(clamp_linesString{i_cl}, 'LineSegment');
-                clamp_lines{i_cl}.set('specify1', 'coord');
-                clamp_lines{i_cl}.set('coord1', {x1_cl y1_cl});
-                clamp_lines{i_cl}.set('specify2', 'coord');
-                clamp_lines{i_cl}.set('coord2', {x2_cl y2_cl});
+            %if i_cl>0
+            x_cl = sprintf('%s + (%s - 2 * %s - %s) * cos(%s) / 2', ...
+                x_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i});
+            y_cl = sprintf('%s + (%s - 2 * %s - %s) * sin(%s) / 2', ...
+                y_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i});
+            l_cl = l_cut;
 
-                x_bl = sprintf('%s', x_seg{i});
-                y_bl = sprintf('%s-%s/2', y_seg{i}, l_seg{i});
-                x1_bl = sprintf('%s - w0/2', x_bl);
-                y1_bl = sprintf('%s', y_bl);
-                x2_bl = sprintf('%s + w0/2', x_bl);
-                y2_bl = sprintf('%s', y_bl);
-                clamp_linesString{2} = sprintf('ls%i',2);
-                clamp_lines{2} = wp1.geom.create(clamp_linesString{2}, 'LineSegment');
-                clamp_lines{2}.set('specify1', 'coord');
-                clamp_lines{2}.set('coord1', {x1_bl y1_bl});
-                clamp_lines{2}.set('specify2', 'coord');
-                clamp_lines{2}.set('coord2', {x2_bl y2_bl});
+            theta_cl = sprintf('fix(sqrt(2)*cos(%s)) * pi / 2', theta_mod);
+            if mod(eval(theta_mod),pi/4) < 1e-10
+                theta_cl = 'pi/2';
             end
-        end
+            
+            x1_cl = sprintf('%s - %s * sin(%s) / 2', x_cl, l_cl, theta_cl);
+            x2_cl = sprintf('%s + %s * sin(%s) / 2', x_cl, l_cl, theta_cl);
+            y1_cl = sprintf('%s - %s * cos(%s) / 2', y_cl, l_cl, theta_cl);
+            y2_cl = sprintf('%s + %s * cos(%s) / 2', y_cl, l_cl, theta_cl);
+            clamp_linesString{i_cl} = sprintf('ls%i',i_cl);
+            clamp_lines{i_cl} = wp1.geom.create(clamp_linesString{i_cl}, 'LineSegment');
+            clamp_lines{i_cl}.set('specify1', 'coord');
+            clamp_lines{i_cl}.set('coord1', {x1_cl y1_cl});
+            clamp_lines{i_cl}.set('specify2', 'coord');
+            clamp_lines{i_cl}.set('coord2', {x2_cl y2_cl});
+
+            x_bl = sprintf('%s', x_seg{i});
+            y_bl = sprintf('%s-%s/2', y_seg{i}, l_seg{i});
+            x1_bl = sprintf('%s - w0/2', x_bl);
+            y1_bl = sprintf('%s', y_bl);
+            x2_bl = sprintf('%s + w0/2', x_bl);
+            y2_bl = sprintf('%s', y_bl);
+            clamp_linesString{i_cl+1} = sprintf('ls%i',i_cl+1);
+            clamp_lines{i_cl+1} = wp1.geom.create(clamp_linesString{i_cl+1}, 'LineSegment');
+            clamp_lines{i_cl+1}.set('specify1', 'coord');
+            clamp_lines{i_cl+1}.set('coord1', {x1_bl y1_bl});
+            clamp_lines{i_cl+1}.set('specify2', 'coord');
+            clamp_lines{i_cl+1}.set('coord2', {x2_bl y2_bl});
+            end
 
     end
     uni1 = wp1.geom.create('uni1', 'Union');
