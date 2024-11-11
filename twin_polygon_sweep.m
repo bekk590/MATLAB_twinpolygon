@@ -1,6 +1,6 @@
 function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
          twin_polygon_sweep(stress, h_mbr, l0, w0, N,...
-                           N_sol,rl1, rl2, rw1, rw2, wl,wc,...
+                           N_sol,rl1, rl2, rw1, rw2, lc, wc,...
                            l_trans, l_pad, w_pad, values,...
                            plot_flag, plot_op_flag, pad_trigger)
     % Description
@@ -56,7 +56,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     theta_seg = cell(5,1);
     l_seg = cell(5,1);
     w_seg = cell(5,1);
-    disp('テストです');
+    disp(w_pad);
     %disp(theta_seg{1});
 
    
@@ -71,9 +71,10 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     model.param.set('rw2', sprintf('%d',rw2), 'Width expansion ratio right');
     model.param.set('l_pad', sprintf('%d[m]', l_pad), 'Length of the pad');
     model.param.set('w_pad', sprintf('%d[m]', w_pad), 'Width of the pad');
+    disp(w_pad);
     model.param.set('l_trans', sprintf('%d[m]', l_trans), 'Length of the spline for the pad');
     model.param.set('wc', sprintf('%d[m]', wc), 'Width of the coupler segment');
-    model.param.set('wl', sprintf('%d[m]', wl), 'Length of the coupler segment');
+    model.param.set('lc', sprintf('%d[m]', lc), 'Length of the coupler segment');
     model.param.set('Qint', '12500 * (h_mbr/100e-9[m])');
     model.param.descr('Qint', 'Intrinsic Q');    
     model.param.set('rotangle', '(2*pi/N)');
@@ -111,28 +112,34 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     clamp_lines = cell(5,1);
     clamp_linesString = cell(5,1);
 
-    for i = 1:5
+    for i = 2:5
         %ind = i;
         %ind_p = 1;
         segmentsString{i} = sprintf('r%i',i);
         j = round(i/2);
+        if mod(j, 2) == 1 & j ~= 1
+            j = j + 1;
+        end
         fprintf('j = %d\n', j);
         %disp(theta_seg{ind_p});
-        theta_seg{i} = sprintf('(%s + (pi/4) * ((-1)^(%s - %s)))', theta_seg{j}, i. j);
+        
         if i == 2            
             l_seg{i} = 'l0*rl1';
             w_seg{i} = 'w0*rw1';            
         disp(theta_seg{i});
+        theta_seg{i} = sprintf('(%s + (pi/4) * ((-1)^(%d - %d + 1)))', theta_seg{j}, i, j);
         end
         if i == 3 || i == 5   
             l_seg{i} = 'l0';
             w_seg{i} = 'w0';            
         disp(theta_seg{i});
+        theta_seg{i} = sprintf('(%s + (pi/4) * ((-1)^(%d - %d + 1)))', theta_seg{j}, i, j);
         end
         if i == 4          
             l_seg{i} = 'l0*rl2';
             w_seg{i} = 'w0*rw2';            
         disp(theta_seg{i});
+        theta_seg{i} = sprintf('(%s + (pi/2) * ((-1)^(%d - %d + 1)))', theta_seg{j}, i, j);
         end
 
         dl_rw = sprintf('0.5 * %s * (cos(pi/4) - (%s/%s)) / sin(pi/4)', w_seg{j}, w_seg{i}, w_seg{j});
@@ -140,8 +147,8 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             dl_rw = 0;
         end
 
-        x_seg{i} = sprintf('%s - (%s/2-%s) * cos(%s) - %s/2 * cos(%s)', x_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i},  theta_seg{i} );
-        y_seg{i} = sprintf('%s - (%s/2-%s) * sin(%s) - %s/2 * sin(%s)', y_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i},  theta_seg{i} );
+        x_seg{i} = sprintf('%s + (%s/2-%s) * cos(%s) + %s/2 * cos(%s)', x_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i},  theta_seg{i} );
+        y_seg{i} = sprintf('%s + (%s/2-%s) * sin(%s) + %s/2 * sin(%s)', y_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i},  theta_seg{i} );
         disp(x_seg{i});
     end
 
@@ -169,6 +176,10 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
 
     disp(x_seg{1});
     disp(l_seg{1});
+    disp(theta_seg{2});
+    disp(theta_seg{3});
+    disp(theta_seg{4});
+    disp(theta_seg{5});
     
     for i = 1:5
         segments{i} = wp1.geom.feature.create(segmentsString{i}, 'Rectangle');
@@ -187,8 +198,8 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             dl_seg = sprintf('0.5*%s * min(abs(cot(%s)), abs(tan(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
             dx_cut = sprintf('%s * fix(sqrt(2)*cos(%s))/2', l_cut, theta_mod);
             dy_cut = sprintf('%s * fix(sqrt(2)*sin(%s))/2', l_cut, theta_mod);
-
-            if mod(eval(theta_mod),pi/4) == 0 && mod(eval(theta_mod), pi/2) ~= 0
+            disp(eval(theta_mod));
+            if mod(eval(theta_mod),pi/4) == 0 && mod(eval(theta_mod), pi/2) ~= 0                
                 if cos(theta_mod) < 1e-10
                     dx_cut = '0';
                 else
@@ -266,6 +277,8 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     clamp_lines{5}.set('specify2', 'coord');
     clamp_lines{5}.set('coord2', {x2_bl y2_bl});
 
+    %{
+
 
     uni1 = wp1.geom.create('uni1', 'Union');
     uni1.selection('input').set(segmentsString(1:5));
@@ -287,9 +300,11 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     mir1 = wp1.geom.create('mir1', 'Mirror');
     mir1.selection('input').set('dif1');
     mir1.set('pos', {'0' '0'});
-    mir1.set('axis', {'1' '0'});
+    mir1.set('axis', {'0' '1'});
     mir1.set('keep', true);
-    
+  
+
+
     for r = 2:N
         rotatesString{r} = sprintf('rot%i', r);
         rotates{r} = wp1.geom.create(rotatesString{r}, 'Rotate');
@@ -491,7 +506,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     end
     
     
-
+%}
 
 
     geom1.run;
@@ -500,11 +515,11 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         mphgeom(model,'geom1', 'vertexlabels', 'off','facemode','off')
         zlim([-10*h_mbr,10*h_mbr])
         view(0,90)
-        xlim([-2*l0,2*l0])
-        ylim([-2*l0,2*l0])
+        xlim([-6*l0,6*l0])
+        ylim([-4*l0,4*l0])
     end
 
-
+%{
        %% Selection
     %     hold on
         idx_fixed = [];
@@ -1013,7 +1028,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
 
 
     %end
-%}
+
 
 Periresults = table (freqs_match, eta_match, amp_peri_match, Q_match, D_Q_match, m_eff_match, rl2_match, S_F_match);
 figTable = figure;
@@ -1027,4 +1042,14 @@ filename = sprintf('periresult_%s.jpg', values_str);
 frame = getframe(figTable);
 imwrite(frame.cdata, filename);
 mphsave(model, 'Practice_Resonator_four_pads_sweep.mph')
+%}
+%[Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = [1,1,1,1,1,1,1];
+Freqs = 1;
+Q = 1;
+m_eff =1;
+S_F = 1;
+eta = 1;
+rl2_match = 1;
+Q_match = 1;
+
 end
