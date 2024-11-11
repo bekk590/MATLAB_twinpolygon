@@ -56,7 +56,6 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     theta_seg = cell(5,1);
     l_seg = cell(5,1);
     w_seg = cell(5,1);
-    disp(w_pad);
     %disp(theta_seg{1});
 
    
@@ -71,7 +70,6 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     model.param.set('rw2', sprintf('%d',rw2), 'Width expansion ratio right');
     model.param.set('l_pad', sprintf('%d[m]', l_pad), 'Length of the pad');
     model.param.set('w_pad', sprintf('%d[m]', w_pad), 'Width of the pad');
-    disp(w_pad);
     model.param.set('l_trans', sprintf('%d[m]', l_trans), 'Length of the spline for the pad');
     model.param.set('wc', sprintf('%d[m]', wc), 'Width of the coupler segment');
     model.param.set('lc', sprintf('%d[m]', lc), 'Length of the coupler segment');
@@ -116,39 +114,59 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         %ind = i;
         %ind_p = 1;
         segmentsString{i} = sprintf('r%i',i);
-        j = round(i/2);
-        if mod(j, 2) == 1 & j ~= 1
-            j = j + 1;
-        end
+%        j = round(i/2);
+%        if mod(j, 2) == 1 & j ~= 1
+%            j = j + 1;
+%        end
+        j = i - 1;
         fprintf('j = %d\n', j);
         %disp(theta_seg{ind_p});
         
         if i == 2            
             l_seg{i} = 'l0*rl1';
             w_seg{i} = 'w0*rw1';            
-        disp(theta_seg{i});
-        theta_seg{i} = sprintf('(%s + (pi/4) * ((-1)^(%d - %d + 1)))', theta_seg{j}, i, j);
+            theta_seg{i} = sprintf('(%s + (pi/4))', theta_seg{j});
+            disp(theta_seg(i));
         end
         if i == 3 || i == 5   
             l_seg{i} = 'l0';
             w_seg{i} = 'w0';            
-        disp(theta_seg{i});
-        theta_seg{i} = sprintf('(%s + (pi/4) * ((-1)^(%d - %d + 1)))', theta_seg{j}, i, j);
+        
+            theta_seg{i} = sprintf('(%s + (pi/4))', theta_seg{j});
+            disp(eval(theta_seg{i}));
         end
         if i == 4          
             l_seg{i} = 'l0*rl2';
             w_seg{i} = 'w0*rw2';            
-        disp(theta_seg{i});
-        theta_seg{i} = sprintf('(%s + (pi/2) * ((-1)^(%d - %d + 1)))', theta_seg{j}, i, j);
+        
+            theta_seg{i} = sprintf('(%s - pi/4 * 3)', theta_seg{j});
+            disp(eval(theta_seg{i}));
         end
 
         dl_rw = sprintf('0.5 * %s * (cos(pi/4) - (%s/%s)) / sin(pi/4)', w_seg{j}, w_seg{i}, w_seg{j});
-        if dl_rw<0
+        if i == 5
+            disp(w_seg{j});
+            disp(dl_rw);      
+        end        
+
+        if eval(dl_rw)<0
             dl_rw = 0;
         end
 
+        if i == 5
+            disp(w_seg{j});
+            disp(dl_rw);
+            desp;
+        end
+
+        
+
         x_seg{i} = sprintf('%s + (%s/2-%s) * cos(%s) + %s/2 * cos(%s)', x_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i},  theta_seg{i} );
-        y_seg{i} = sprintf('%s + (%s/2-%s) * sin(%s) + %s/2 * sin(%s)', y_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i},  theta_seg{i} );
+        if i == 4
+            y_seg{i} = sprintf('%s - (%s/2-%s) * sin(%s) + %s/2 * sin(%s)', y_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i},  theta_seg{i} );
+        else
+            y_seg{i} = sprintf('%s + (%s/2-%s) * sin(%s) + %s/2 * sin(%s)', y_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i},  theta_seg{i} );
+        end
         disp(x_seg{i});
     end
 
@@ -198,7 +216,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             dl_seg = sprintf('0.5*%s * min(abs(cot(%s)), abs(tan(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
             dx_cut = sprintf('%s * fix(sqrt(2)*cos(%s))/2', l_cut, theta_mod);
             dy_cut = sprintf('%s * fix(sqrt(2)*sin(%s))/2', l_cut, theta_mod);
-            disp(eval(theta_mod));
+            fprintf('theta_mod = %d\n', eval(theta_mod));
             if mod(eval(theta_mod),pi/4) == 0 && mod(eval(theta_mod), pi/2) ~= 0                
                 if cos(theta_mod) < 1e-10
                     dx_cut = '0';
@@ -235,14 +253,14 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             l_cl = l_cut;
 
             theta_cl = sprintf('fix(sqrt(2)*cos(%s)) * pi / 2', theta_mod);
-            if mod(eval(theta_mod),pi/4) < 1e-10
+            if mod(eval(theta_mod),pi/4) < 1e-10 && mod(eval(theta_mod),pi/2) > 1e-5
                 theta_cl = 'pi/2';
             end
-            
-            x1_cl = sprintf('%s - %s * sin(%s) / 2', x_cl, l_cl, theta_cl);
-            x2_cl = sprintf('%s + %s * sin(%s) / 2', x_cl, l_cl, theta_cl);
-            y1_cl = sprintf('%s - %s * cos(%s) / 2', y_cl, l_cl, theta_cl);
-            y2_cl = sprintf('%s + %s * cos(%s) / 2', y_cl, l_cl, theta_cl);
+            fprintf('theta_cl = %d\n', eval(theta_cl));
+            x1_cl = sprintf('%s - %s * cos(%s) / 2', x_cl, l_cl, theta_cl);
+            x2_cl = sprintf('%s + %s * cos(%s) / 2', x_cl, l_cl, theta_cl);
+            y1_cl = sprintf('%s - %s * sin(%s) / 2', y_cl, l_cl, theta_cl);
+            y2_cl = sprintf('%s + %s * sin(%s) / 2', y_cl, l_cl, theta_cl);
             clamp_linesString{i_cl} = sprintf('ls%i',i_cl);
             clamp_lines{i_cl} = wp1.geom.create(clamp_linesString{i_cl}, 'LineSegment');
             clamp_lines{i_cl}.set('specify1', 'coord');
@@ -250,12 +268,12 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             clamp_lines{i_cl}.set('specify2', 'coord');
             clamp_lines{i_cl}.set('coord2', {x2_cl y2_cl});
 
-            x_bl = sprintf('%s', x_seg{i});
-            y_bl = sprintf('%s-%s/2', y_seg{i}, l_seg{i});
-            x1_bl = sprintf('%s - w0/2 * sin(%s)', x_bl, theta_cl);
-            y1_bl = sprintf('%s - w0/2 * cos(%s)', y_bl, theta_cl);
-            x2_bl = sprintf('%s + w0/2 * sin(%s)', x_bl, theta_cl);
-            y2_bl = sprintf('%s - w0/2 * cos(%s)', y_bl, theta_cl);
+            x_bl = sprintf('%s-%s/2 * cos(%s)', x_seg{i}, l_seg{i}, theta_seg{i});
+            y_bl = sprintf('%s-%s/2 * sin(%s)', y_seg{i}, l_seg{i}, theta_seg{i});
+            x1_bl = sprintf('%s - w0/2 * sin(%s)', x_bl, theta_seg{i});
+            y1_bl = sprintf('%s - w0/2 * cos(%s)', y_bl, theta_seg{i});
+            x2_bl = sprintf('%s + w0/2 * sin(%s)', x_bl, theta_seg{i});
+            y2_bl = sprintf('%s + w0/2 * cos(%s)', y_bl, theta_seg{i});
             clamp_linesString{i_cl+1} = sprintf('ls%i',i_cl+1);
             clamp_lines{i_cl+1} = wp1.geom.create(clamp_linesString{i_cl+1}, 'LineSegment');
             clamp_lines{i_cl+1}.set('specify1', 'coord');
@@ -286,6 +304,12 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     dif2.selection('input').set(segmentsString(5));
     dif2.selection('input2').set(segmentsString(7));
 
+    uni1 = wp1.geom.create('uni1', 'Union');
+    uni1.selection('input').set({segmentsString{2}, segmentsString{4}, 'dif1'});
+    uni1.set('intbnd', false);
+
+
+
     if (w_pad>w0) && (l_pad>0)
         
         paramcurve1 = wp1.geom.create('pc1', 'ParametricCurve');
@@ -295,9 +319,9 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         paramcurve1.set('coord', {'s*l_trans' '0.5* (w_pad-w0*rw1)*(-2*s^3+3*s^2)'});
         ls_pad = wp1.geom.create(sprintf('ls%i',6), 'LineSegment');
         ls_pad.set('specify1', 'coord');
-        ls_pad.set('coord1', [-l_pad/2 w_pad/2]);
+        ls_pad.set('coord1', {'-l_pad/2' 'w_pad/2'});
         ls_pad.set('specify2', 'coord');
-        ls_pad.set('coord2', [l_pad/2 w_pad/2]);
+        ls_pad.set('coord2', {'l_pad/2' 'w_pad/2'});
         paramcurve2 = wp1.geom.create('pc2', 'ParametricCurve');
         paramcurve2.set('parmin', 0);
         paramcurve2.set('parmax', 1);
@@ -326,14 +350,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     
         mov1 = wp1.geom.create('mov1', 'Move');
         mov1.selection('input').set(rotatesString{1});
-        
-        mov1.set('displ', {sprintf('%s + (l0 * rl1 * cos(%s) / 2)',l_seg{1}, theta_seg{2}) sprintf('l0 * rl1 * sin(%s) / 2', theta_seg{2})});
-
-
-        %mov1.set('displ', sprintf('{%s - (l0 * rl1 * cos(%s) / 2) Rady - (l0 * rl1 * sin(%s) / 2)}', ...
-        %    x_seg{1}, theta_seg{2},  theta_seg{2}));
-
-
+        mov1.set('displ', {x_seg{2} y_seg{2}});
         mov1.set('keep', false);
     
 %        mir4 = wp1.geom.create('mir4', 'Mirror');
@@ -353,19 +370,19 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             paramcurve3 = wp1.geom.create('pc3', 'ParametricCurve');
             paramcurve3.set('parmin', 0);
             paramcurve3.set('parmax', 1);
-            paramcurve3.set('pos', [-l_trans-l_pad/2 w0*rw2/2]);
+            paramcurve3.set('pos', {'-l_trans-l_pad/2' 'w0*rw2/2'});
             paramcurve3.set('coord', {'s*l_trans' '0.5* (w_pad-w0*rw2)*(-2*s^3+3*s^2)'});
             ls_pad = wp1.geom.create(sprintf('ls%i',7), 'LineSegment');
             ls_pad.set('specify1', 'coord');
-            ls_pad.set('coord1', [-l_pad/2 w_pad/2]);
+            ls_pad.set('coord1', {'-l_pad/2' 'w_pad/2'});
             ls_pad.set('specify2', 'coord');
-            ls_pad.set('coord2', [l_pad/2 w_pad/2]);
+            ls_pad.set('coord2', {'l_pad/2' 'w_pad/2'});
             paramcurve4 = wp1.geom.create('pc4', 'ParametricCurve');
             paramcurve4.set('parmin', 0);
             paramcurve4.set('parmax', 1);
-            paramcurve4.set('pos', [l_trans+l_pad/2 w0*rw2/2]);
+            paramcurve4.set('pos', {'l_trans+l_pad/2' 'w0*rw2/2'});
             paramcurve4.set('coord', {'-s*l_trans' '0.5* (w_pad-w0*rw2)*(-2*s^3+3*s^2)'});
-            mir2 = wp1.geom.create('mir5', 'Mirror');
+            mir2 = wp1.geom.create('mir2', 'Mirror');
             mir2.selection('input').set({'pc3', 'pc4', sprintf('ls%i',7)});
             mir2.set('pos', [0 0]);
             mir2.set('axis', [0 1]);
@@ -379,7 +396,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             csol2.selection('input').set({'pc3', 'pc4', sprintf('ls%i',7), 'mir2',sprintf('r%i',9)});
 
 
-            rotatesString{2} = sprintf('rot%i', 2*N+2);
+            rotatesString{2} = sprintf('rot%i', 2);
             rotates{2} = wp1.geom.create(rotatesString{2}, 'Rotate');
             rotates{2}.selection('input').set('csol2');
             rotates{2}.set('rot', sprintf('%s*180/pi', theta_seg{4}));
@@ -388,9 +405,13 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         
         
             mov2 = wp1.geom.create('mov2', 'Move');
-            mov2.selection('input').set(rotatesString{2*N+2});
-            mov2.set('displ', {sprintf('%s-(l0*rl2*cos(%s)/2)',x_seg{1},theta_seg{3}) sprintf('Rady-(l0*rl2*sin(%s)/2)',theta_seg{3})});
+            mov2.selection('input').set(rotatesString{2});
+            mov2.set('displ', {x_seg{4} y_seg{4}});
             mov2.set('keep', false);
+
+            uni2 = wp1.geom.create('uni2', 'Union');
+            uni2.selection('input').set({'uni1', 'mov1', 'mov2'});
+            uni2.set('intbnd', false);
         
 %            mir6 = wp1.geom.create('mir6', 'Mirror');
 %            mir6.selection('input').set('mov2');
@@ -402,8 +423,30 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
 %            uni4 = wp1.geom.create('uni4', 'Union');
 %            uni4.selection('input').set({'uni3','mov2','mir6'});
 %            uni4.set('intbnd', false);
+        else
+            uni2 = wp1.geom.create('uni2', 'Union');
+            uni2.selection('input').set({'uni1', 'mov1'});
+            uni2.set('intbnd', false);
         end
     end
+
+    posx = sprintf('(abs((%s + %s * cos(%s) / 2) + (%s - %s * cos(%s) / 2)) / 2)', ...
+        x_seg{4}, l_seg{4}, theta_seg{4}, x_seg{2}, l_seg{2}, theta_seg{2});
+    
+    posy = sprintf('(abs((%s + %s * sin(%s) / 2) + (%s - %s * sin(%s) / 2)) / 2)', ...
+        y_seg{4}, l_seg{4}, theta_seg{4}, y_seg{2}, l_seg{2}, theta_seg{2});
+
+    %posx = eval(posx);
+    %posy = eval(posy);
+
+
+
+    rotatesString{3} = sprintf('rot%i', 3);
+    rotates{3} = wp1.geom.create(rotatesString{3}, 'Rotate');
+    rotates{3}.selection('input').set('uni2');
+    rotates{3}.set('rot', '180');
+    rotates{3}.set('keep', true);
+    rotates{3}.set('pos', {posx posy});
 
 
 

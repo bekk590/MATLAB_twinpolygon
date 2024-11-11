@@ -12,14 +12,14 @@ N_sol = 15;
 w0 = 200e-9;
 
 rl1 =  1/0.4;
-rl2 = 1/0.4;
+rl2 = 1/0.5;
 %rl2 =  744/(700*0.4);
 
 values = 2.59:0.001:2.60;
 %values = 2.59;
 
-rw1 =  1/10;
-rw2=   1/10;
+rw1 =  1/sqrt(2);
+rw2=   1/sqrt(3);
 
 wc = 2e-6;
 lc = 700e-6;
@@ -38,7 +38,7 @@ wc = 600e-9;
 
 
 
-pad_trigger = 0;%0: 2_pads, 1:4_pads
+pad_trigger = 1;%0: 2_pads, 1:4_pads
 
 
 [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
