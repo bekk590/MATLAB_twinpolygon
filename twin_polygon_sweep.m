@@ -207,6 +207,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             else
                 i_cut = 7;
                 i_cl = 3;
+            end
             %i_cut = i+3;
             segmentsString{i_cut} = sprintf('r%i',i_cut);
             segments{i_cut} = wp1.geom.feature.create(segmentsString{i_cut}, 'Rectangle');
@@ -240,33 +241,46 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
 
             x_bl = sprintf('%s', x_seg{i});
             y_bl = sprintf('%s-%s/2', y_seg{i}, l_seg{i});
-            x1_bl = sprintf('%s - w0/2', x_bl);
-            y1_bl = sprintf('%s', y_bl);
-            x2_bl = sprintf('%s + w0/2', x_bl);
-            y2_bl = sprintf('%s', y_bl);
+            x1_bl = sprintf('%s - w0/2 * sin(%s)', x_bl, theta_cl);
+            y1_bl = sprintf('%s - w0/2 * cos(%s)', y_bl, theta_cl);
+            x2_bl = sprintf('%s + w0/2 * sin(%s)', x_bl, theta_cl);
+            y2_bl = sprintf('%s - w0/2 * cos(%s)', y_bl, theta_cl);
             clamp_linesString{i_cl+1} = sprintf('ls%i',i_cl+1);
             clamp_lines{i_cl+1} = wp1.geom.create(clamp_linesString{i_cl+1}, 'LineSegment');
             clamp_lines{i_cl+1}.set('specify1', 'coord');
             clamp_lines{i_cl+1}.set('coord1', {x1_bl y1_bl});
             clamp_lines{i_cl+1}.set('specify2', 'coord');
             clamp_lines{i_cl+1}.set('coord2', {x2_bl y2_bl});
-            end
+        end
 
     end
+
+    x1_bl = 'lc/2';
+    y1_bl = 'wc/2';
+    x2_bl = 'lc/2';
+    y2_bl = '-wc/2';
+    clamp_linesString{5} = sprintf('ls%i',5);
+    clamp_lines{5} = wp1.geom.create(clamp_linesString{5}, 'LineSegment');
+    clamp_lines{5}.set('specify1', 'coord');
+    clamp_lines{5}.set('coord1', {x1_bl y1_bl});
+    clamp_lines{5}.set('specify2', 'coord');
+    clamp_lines{5}.set('coord2', {x2_bl y2_bl});
+
+
     uni1 = wp1.geom.create('uni1', 'Union');
-    uni1.selection('input').set(segmentsString(1:3));
+    uni1.selection('input').set(segmentsString(1:5));
     uni1.set('intbnd', false);
 
     uni5 = wp1.geom.create('uni5', 'Union');
-    uni5.selection('input').set({'ls1', 'ls2'});
+    uni5.selection('input').set(clamp_linesString(1:5));
     uni5.set('intbnd', false);
 %     
     dif1 = wp1.geom.create('dif1', 'Difference');
     dif1.selection('input').set('uni1');
-    dif1.selection('input2').set(segmentsString{4});
+    dif1.selection('input2').set(segmentsString(6:7));
 
-    rotates = cell(2*N,1);
-    rotatesString = cell(2*N+2,1);
+%    rotates = cell(2*N,1);
+%    rotatesString = cell(2*N+2,1);
 %    rotatesString = cell(fix(N),1);
 
 
