@@ -277,6 +277,136 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     clamp_lines{5}.set('specify2', 'coord');
     clamp_lines{5}.set('coord2', {x2_bl y2_bl});
 
+
+    dif1 = wp1.geom.create('dif1', 'Difference');
+    dif1.selection('input').set(segmentsString(3));
+    dif1.selection('input2').set(segmentsString(6));
+
+    dif2 = wp1.geom.create('dif2', 'Difference');
+    dif2.selection('input').set(segmentsString(5));
+    dif2.selection('input2').set(segmentsString(7));
+
+    if (w_pad>w0) && (l_pad>0)
+        
+        paramcurve1 = wp1.geom.create('pc1', 'ParametricCurve');
+        paramcurve1.set('parmin', 0);
+        paramcurve1.set('parmax', 1);
+        paramcurve1.set('pos', {'-l_trans-l_pad/2' 'w0*rw1/2'});
+        paramcurve1.set('coord', {'s*l_trans' '0.5* (w_pad-w0*rw1)*(-2*s^3+3*s^2)'});
+        ls_pad = wp1.geom.create(sprintf('ls%i',6), 'LineSegment');
+        ls_pad.set('specify1', 'coord');
+        ls_pad.set('coord1', [-l_pad/2 w_pad/2]);
+        ls_pad.set('specify2', 'coord');
+        ls_pad.set('coord2', [l_pad/2 w_pad/2]);
+        paramcurve2 = wp1.geom.create('pc2', 'ParametricCurve');
+        paramcurve2.set('parmin', 0);
+        paramcurve2.set('parmax', 1);
+        paramcurve2.set('pos', [l_trans+l_pad/2 w0*rw1/2]);
+        paramcurve2.set('coord', {'-s*l_trans' '0.5* (w_pad-w0*rw1)*(-2*s^3+3*s^2)'});
+        mir1 = wp1.geom.create('mir1', 'Mirror');
+        mir1.selection('input').set({'pc1', 'pc2', sprintf('ls%i',6)});
+        mir1.set('pos', [0 0]);
+        mir1.set('axis', [0 1]);
+        mir1.set('keep', true);
+        
+        rec_pad = wp1.geom.create(sprintf('r%i',8), 'Rectangle');
+        rec_pad.set('size', [l_pad+2*l_trans w0*rw1]);
+        rec_pad.set('base', 'center');
+        rec_pad.set('pos', [0 0]);       
+        csol1 = wp1.geom.create('csol1', 'ConvertToSolid');
+        csol1.selection('input').set({'pc1', 'pc2', sprintf('ls%i',6), 'mir1',sprintf('r%i',8)});
+
+        rotatesString{1} = 'rot1';
+        rotates{1} = wp1.geom.create(rotatesString{1}, 'Rotate');
+        rotates{1}.selection('input').set('csol1');
+        rotates{1}.set('rot', sprintf('%s*180/pi',theta_seg{2}));
+        rotates{1}.set('keep', false)
+        rotates{1}.set('pos', [0 0])
+    
+    
+        mov1 = wp1.geom.create('mov1', 'Move');
+        mov1.selection('input').set(rotatesString{1});
+        
+        mov1.set('displ', {sprintf('%s + (l0 * rl1 * cos(%s) / 2)',l_seg{1}, theta_seg{2}) sprintf('l0 * rl1 * sin(%s) / 2', theta_seg{2})});
+
+
+        %mov1.set('displ', sprintf('{%s - (l0 * rl1 * cos(%s) / 2) Rady - (l0 * rl1 * sin(%s) / 2)}', ...
+        %    x_seg{1}, theta_seg{2},  theta_seg{2}));
+
+
+        mov1.set('keep', false);
+    
+%        mir4 = wp1.geom.create('mir4', 'Mirror');
+%        mir4.selection('input').set('mov1');
+%        mir4.set('pos', [0 0]);
+%        mir4.set('axis', [1 -1]);
+%        mir4.set('keep', true);
+    
+    
+%        uni3 = wp1.geom.create('uni3', 'Union');
+%        uni3.selection('input').set({'uni2','mov1','mir4'});
+%        uni3.set('intbnd', false);
+
+
+        if pad_trigger
+
+            paramcurve3 = wp1.geom.create('pc3', 'ParametricCurve');
+            paramcurve3.set('parmin', 0);
+            paramcurve3.set('parmax', 1);
+            paramcurve3.set('pos', [-l_trans-l_pad/2 w0*rw2/2]);
+            paramcurve3.set('coord', {'s*l_trans' '0.5* (w_pad-w0*rw2)*(-2*s^3+3*s^2)'});
+            ls_pad = wp1.geom.create(sprintf('ls%i',7), 'LineSegment');
+            ls_pad.set('specify1', 'coord');
+            ls_pad.set('coord1', [-l_pad/2 w_pad/2]);
+            ls_pad.set('specify2', 'coord');
+            ls_pad.set('coord2', [l_pad/2 w_pad/2]);
+            paramcurve4 = wp1.geom.create('pc4', 'ParametricCurve');
+            paramcurve4.set('parmin', 0);
+            paramcurve4.set('parmax', 1);
+            paramcurve4.set('pos', [l_trans+l_pad/2 w0*rw2/2]);
+            paramcurve4.set('coord', {'-s*l_trans' '0.5* (w_pad-w0*rw2)*(-2*s^3+3*s^2)'});
+            mir2 = wp1.geom.create('mir5', 'Mirror');
+            mir2.selection('input').set({'pc3', 'pc4', sprintf('ls%i',7)});
+            mir2.set('pos', [0 0]);
+            mir2.set('axis', [0 1]);
+            mir2.set('keep', true);
+
+            rec_pad = wp1.geom.create(sprintf('r%i',9), 'Rectangle');
+            rec_pad.set('size', [l_pad+2*l_trans w0*rw2]);
+            rec_pad.set('base', 'center');
+            rec_pad.set('pos', [0 0]);       
+            csol2 = wp1.geom.create('csol2', 'ConvertToSolid');
+            csol2.selection('input').set({'pc3', 'pc4', sprintf('ls%i',7), 'mir2',sprintf('r%i',9)});
+
+
+            rotatesString{2} = sprintf('rot%i', 2*N+2);
+            rotates{2} = wp1.geom.create(rotatesString{2}, 'Rotate');
+            rotates{2}.selection('input').set('csol2');
+            rotates{2}.set('rot', sprintf('%s*180/pi', theta_seg{4}));
+            rotates{2}.set('keep', false)
+            rotates{2}.set('pos', [0 0])
+        
+        
+            mov2 = wp1.geom.create('mov2', 'Move');
+            mov2.selection('input').set(rotatesString{2*N+2});
+            mov2.set('displ', {sprintf('%s-(l0*rl2*cos(%s)/2)',x_seg{1},theta_seg{3}) sprintf('Rady-(l0*rl2*sin(%s)/2)',theta_seg{3})});
+            mov2.set('keep', false);
+        
+%            mir6 = wp1.geom.create('mir6', 'Mirror');
+%            mir6.selection('input').set('mov2');
+%            mir6.set('pos', [0 0]);
+%            mir6.set('axis', [1 1]);
+%            mir6.set('keep', true);
+        
+        
+%            uni4 = wp1.geom.create('uni4', 'Union');
+%            uni4.selection('input').set({'uni3','mov2','mir6'});
+%            uni4.set('intbnd', false);
+        end
+    end
+
+
+
     %{
 
 
@@ -1041,8 +1171,10 @@ values_str = values_str(1:end-1);
 filename = sprintf('periresult_%s.jpg', values_str);
 frame = getframe(figTable);
 imwrite(frame.cdata, filename);
-mphsave(model, 'Practice_Resonator_four_pads_sweep.mph')
 %}
+
+mphsave(model, 'Practice_Resonator_twin_practice.mph')
+
 %[Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = [1,1,1,1,1,1,1];
 Freqs = 1;
 Q = 1;
