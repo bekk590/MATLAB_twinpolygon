@@ -150,40 +150,14 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         end
 
         dl_rw = sprintf('(0.5 * %s * (cos(pi/4) - (%s/%s)) / sin(pi/4))', w_seg{j}, w_seg{i}, w_seg{j});
-        %dl_rw = '0';
-
-        if i == 5
-            disp(w_seg{j});
-            disp(dl_rw);      
-        end        
+        %dl_rw = '0';   
 
         if eval(dl_rw)<0
             dl_rw = '0';
             fprintf('i = %d\n', i);
             dl_rl = sprintf('(0.5 * %s * (cos(pi/4) - (%s/%s)) / sin(pi/4))', w_seg{i}, w_seg{j}, w_seg{i});
-            disp(eval('dl_rl'));
         end
-
-%        if i == 3
-%            disp('-----');
-%            disp(eval(sprintf('%s',w_seg{j})))
-%            disp(eval(sprintf('%s',w_seg{i})))
-%            k = sprintf('%s/%s',w_seg{i}, w_seg{j});
-%            disp(k);
-%            disp(eval(k));
-%            disp(eval(dl_rw));
-%            desp;
-%            disp(eval(sprintf('cos(%s)', theta_seg{j})))
-%            disp(eval(sprintf('(%s/2 - %s) * cos(%s)', l_seg{j}, dl_rw, theta_seg{j})))
-%            disp(eval(sprintf('(%s/2 + %s) * cos(%s)', l_seg{j}, dl_rw, theta_seg{j})))
-%            disp(eval(sprintf('%s + (%s/2-%s) * cos(%s)+%s/2 * cos(%s)', x_seg{j},l_seg{j}, dl_rw, theta_seg{j}, l_seg{i},  theta_seg{i} )))
-%            disp(eval(sprintf('%s + (%s/2+%s) * cos(%s)', x_seg{j},l_seg{j}, dl_rw, theta_seg{j})))
-%            %desp;
-%        end
-        
        
-
-        
         x_seg{i} = sprintf('%s + (%s/2-%s) * cos(%s) + (%s/2-%s) * cos(%s)', x_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i}, dl_rl, theta_seg{i} );
         
         
@@ -191,13 +165,6 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             y_seg{i} = sprintf('%s - (%s/2-%s) * sin(%s) + (%s/2-%s) * sin(%s)', y_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i}, dl_rl,  theta_seg{i} );
         else
             y_seg{i} = sprintf('%s + (%s/2-%s) * sin(%s) + (%s/2-%s) * sin(%s)', y_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i}, dl_rl,  theta_seg{i} );
-        end
-        if i == 5
-            disp(eval(x_seg{i}));
-            disp(eval(y_seg{i}));
-            disp(eval(sprintf('%s + (%s/2) * cos(%s) + %s/2 * cos(%s)', x_seg{j}, l_seg{j}, theta_seg{j}, l_seg{i},  theta_seg{i} )));
-            disp(eval(sprintf('%s + (%s/2) * sin(%s) + %s/2 * sin(%s)', y_seg{j}, l_seg{j}, theta_seg{j}, l_seg{i},  theta_seg{i} )));
-            %desp;
         end
     end
 
@@ -467,11 +434,6 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     posy = sprintf('(abs((%s + %s * sin(%s) / 2) + (%s - %s * sin(%s) / 2)) / 2)', ...
         y_seg{4}, l_seg{4}, theta_seg{4}, y_seg{2}, l_seg{2}, theta_seg{2});
 
-    %posx = eval(posx);
-    %posy = eval(posy);
-
-
-
     rotatesString{3} = sprintf('rot%i', 3);
     rotates{3} = wp1.geom.create(rotatesString{3}, 'Rotate');
     rotates{3}.selection('input').set('uni2');
@@ -479,6 +441,22 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     rotates{3}.set('keep', true);
     rotates{3}.set('pos', {posx posy});
 
+    %ここにr5についての'move'を入れる
+
+    uni3 = wp1.geom.create('uni3', 'Union');
+    uni3.selection('input').set({rotatesString{3}, 'uni2', segmentsString{1}, 'dif2'})
+    uni3.set('intbnd', false);
+
+    rotatesString{4} = sprintf('rot%i', 4);
+    rotates{4} = wp1.geom.create(rotatesString{4}, 'Rotate');
+    rotates{4}.selection('input').set('uni3');
+    rotates{4}.set('rot', '180');
+    rotates{4}.set('keep', true);
+    rotates{4}.set('pos', {'0' '0'});
+
+    uni4 = wp1.geom.create('uni4', 'Union');
+    uni4.selection('input').set({rotatesString{4}, 'uni3'})
+    uni4.set('intbnd', false);
 
 
     %{
