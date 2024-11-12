@@ -13,6 +13,7 @@ N_sol = 15;
 
 w0 = 200e-9;
 
+
 rl1 =  1/0.4;
 rl2 = 1/0.5;
 %rl2 =  744/(700*0.4);
@@ -20,8 +21,9 @@ rl2 = 1/0.5;
 values = 2.59:0.001:2.60;
 %values = 2.59;
 
+%Since this is before modification, rw1 and rw2 should be the same value
 rw1 =  1/sqrt(3);
-rw2=   1/sqrt(6);
+rw2=   1/sqrt(3);
 
 wc = 2e-6;
 lc = 700e-6;

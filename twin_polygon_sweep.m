@@ -350,17 +350,6 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         mov1.selection('input').set(rotatesString{1});
         mov1.set('displ', {x_seg{2} y_seg{2}});
         mov1.set('keep', false);
-    
-%        mir4 = wp1.geom.create('mir4', 'Mirror');
-%        mir4.selection('input').set('mov1');
-%        mir4.set('pos', [0 0]);
-%        mir4.set('axis', [1 -1]);
-%        mir4.set('keep', true);
-    
-    
-%        uni3 = wp1.geom.create('uni3', 'Union');
-%        uni3.selection('input').set({'uni2','mov1','mir4'});
-%        uni3.set('intbnd', false);
 
 
         if pad_trigger
@@ -410,17 +399,6 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             uni2 = wp1.geom.create('uni2', 'Union');
             uni2.selection('input').set({'uni1', 'mov1', 'mov2'});
             uni2.set('intbnd', false);
-        
-%            mir6 = wp1.geom.create('mir6', 'Mirror');
-%            mir6.selection('input').set('mov2');
-%            mir6.set('pos', [0 0]);
-%            mir6.set('axis', [1 1]);
-%            mir6.set('keep', true);
-        
-        
-%            uni4 = wp1.geom.create('uni4', 'Union');
-%            uni4.selection('input').set({'uni3','mov2','mir6'});
-%            uni4.set('intbnd', false);
         else
             uni2 = wp1.geom.create('uni2', 'Union');
             uni2.selection('input').set({'uni1', 'mov1'});
@@ -441,8 +419,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     rotates{3}.set('keep', true);
     rotates{3}.set('pos', {posx posy});
 
-    %ここにr5についての'move'を入れる
-
+    
     uni3 = wp1.geom.create('uni3', 'Union');
     uni3.selection('input').set({rotatesString{3}, 'uni2', segmentsString{1}, 'dif2'})
     uni3.set('intbnd', false);
@@ -458,239 +435,28 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     uni4.selection('input').set({rotatesString{4}, 'uni3'})
     uni4.set('intbnd', false);
 
-
-    %{
-
-
-    uni1 = wp1.geom.create('uni1', 'Union');
-    uni1.selection('input').set(segmentsString(1:5));
-    uni1.set('intbnd', false);
-
     uni5 = wp1.geom.create('uni5', 'Union');
-    uni5.selection('input').set(clamp_linesString(1:5));
+    uni5.selection('input').set({clamp_linesString{1:2}})
     uni5.set('intbnd', false);
-%     
-    dif1 = wp1.geom.create('dif1', 'Difference');
-    dif1.selection('input').set('uni1');
-    dif1.selection('input2').set(segmentsString(6:7));
 
-%    rotates = cell(2*N,1);
-%    rotatesString = cell(2*N+2,1);
-%    rotatesString = cell(fix(N),1);
+    rotatesString{5} = sprintf('rot%i', 5);
+    rotates{5} = wp1.geom.create(rotatesString{5}, 'Rotate');
+    rotates{5}.selection('input').set({'uni5'});
+    rotates{5}.set('rot', '180');
+    rotates{5}.set('keep', true);
+    rotates{5}.set('pos', {posx posy});
 
+    uni6 = wp1.geom.create('uni6', 'Union');
+    uni6.selection('input').set({clamp_linesString{3:5}, 'uni5', rotatesString{5}})
+    uni6.set('intbnd', false);
 
-    mir1 = wp1.geom.create('mir1', 'Mirror');
-    mir1.selection('input').set('dif1');
-    mir1.set('pos', {'0' '0'});
-    mir1.set('axis', {'0' '1'});
-    mir1.set('keep', true);
-  
-
-
-    for r = 2:N
-        rotatesString{r} = sprintf('rot%i', r);
-        rotates{r} = wp1.geom.create(rotatesString{r}, 'Rotate');
-        if mod(r,2) == 1
-            rotates{r}.selection('input').set('dif1');
-        else
-            rotates{r}.selection('input').set('mir1');
-        end
-        
-        rotates{r}.set('rot', sprintf('rotangle*180/pi * (%d-1)', r));
-        rotates{r}.set('keep', true)
-        rotates{r}.set('pos', {'0' '0'})
-
-    end
-
-    rotatesString{1} = 'rot1';
-    rotates{1} = wp1.geom.create(rotatesString{1}, 'Rotate');
-    rotates{1}.selection('input').set('dif1');
-    rotates{1}.set('rot', '0');
-    rotates{1}.set('keep', false)
-    rotates{1}.set('pos', {'0' '0'})
-
-    del1 = wp1.geom.create('del1', 'Delete');
-    del1.selection('input').init;
-    del1.selection('input').set('mir1');
-
+    rotatesString{6} = sprintf('rot%i', 6);
+    rotates{6} = wp1.geom.create(rotatesString{6}, 'Rotate');
+    rotates{6}.selection('input').set({'uni6'});
+    rotates{6}.set('rot', '180');
+    rotates{6}.set('keep', true);
+    rotates{6}.set('pos', {'0' '0'});
     
-    mir2 = wp1.geom.create('mir2', 'Mirror');
-    mir2.selection('input').set('uni5');
-    mir2.set('pos', {'0' '0'});
-    mir2.set('axis', {'1' '0'});
-    mir2.set('keep', true);
-
-    for r = N+2:2*N
-        rotatesString{r} = sprintf('rot%i', r);
-        rotates{r} = wp1.geom.create(rotatesString{r}, 'Rotate');
-        if mod(r,2) == 1
-            rotates{r}.selection('input').set('uni5');
-        else
-            rotates{r}.selection('input').set('mir2');
-        end
-        
-        rotates{r}.set('rot', sprintf('rotangle * 180/pi * (%d - N - 1)', r));
-        rotates{r}.set('keep', true)
-        rotates{r}.set('pos', {'0' '0'})
-    end
-
-    rotatesString{N+1} = sprintf('rot%i', N+1);
-    rotates{N+1} = wp1.geom.create(rotatesString{N+1}, 'Rotate');
-    rotates{N+1}.selection('input').set('uni5');
-    rotates{N+1}.set('rot', 0);
-    rotates{N+1}.set('keep', false)
-    rotates{N+1}.set('pos', {'0' '0'})
-
-    del2 = wp1.geom.create('del2', 'Delete');
-    del2.selection('input').init;
-    del2.selection('input').set('mir2');
-
-    uni2 = wp1.geom.create('uni2', 'Union');
-    uni2.selection('input').set(rotatesString(1:N));
-    uni2.set('intbnd', false);
-
-    %{
-    mir1 = wp1.geom.create('mir1', 'Mirror');
-    mir1.selection('input').set('dif1');
-    mir1.set('pos', [0 0]);
-    mir1.set('axis', [1 0]);
-    mir1.set('keep', true);
-    uni2 = wp1.geom.create('uni2', 'Union');
-    uni2.selection('input').set({'mir1','dif1'});
-    uni2.set('intbnd', false);
-    mir2 = wp1.geom.create('mir2', 'Mirror');
-    mir2.selection('input').set(clamp_linesString);
-    mir2.set('pos', [0 0]);
-    mir2.set('axis', [1 0]);
-    mir2.set('keep', true);
-    %}
-
-    if (w_pad>w0) && (l_pad>0)
-        
-        paramcurve1 = wp1.geom.create('pc1', 'ParametricCurve');
-        paramcurve1.set('parmin', 0);
-        paramcurve1.set('parmax', 1);
-        paramcurve1.set('pos', {'-l_trans-l_pad/2' 'w0*rw1/2'});
-        paramcurve1.set('coord', {'s*l_trans' '0.5* (w_pad-w0*rw1)*(-2*s^3+3*s^2)'});
-        ls_pad = wp1.geom.create(sprintf('ls%i',3), 'LineSegment');
-        ls_pad.set('specify1', 'coord');
-        ls_pad.set('coord1', [-l_pad/2 w_pad/2]);
-        ls_pad.set('specify2', 'coord');
-        ls_pad.set('coord2', [l_pad/2 w_pad/2]);
-        paramcurve2 = wp1.geom.create('pc2', 'ParametricCurve');
-        paramcurve2.set('parmin', 0);
-        paramcurve2.set('parmax', 1);
-        paramcurve2.set('pos', [l_trans+l_pad/2 w0*rw1/2]);
-        paramcurve2.set('coord', {'-s*l_trans' '0.5* (w_pad-w0*rw1)*(-2*s^3+3*s^2)'});
-        mir3 = wp1.geom.create('mir3', 'Mirror');
-        mir3.selection('input').set({'pc1', 'pc2', sprintf('ls%i',2)});
-        mir3.set('pos', [0 0]);
-        mir3.set('axis', [0 1]);
-        mir3.set('keep', true);
-        
-        rec_pad = wp1.geom.create(sprintf('r%i',5), 'Rectangle');
-        rec_pad.set('size', [l_pad+2*l_trans w0*rw1]);
-        rec_pad.set('base', 'center');
-        rec_pad.set('pos', [0 0]);       
-        csol1 = wp1.geom.create('csol1', 'ConvertToSolid');
-        csol1.selection('input').set({'pc1', 'pc2', sprintf('ls%i',3), 'mir3',sprintf('r%i',5)});
-
-        rotatesString{2*N+1} = sprintf('rot%i', 2*N+1);
-        rotates{2*N+1} = wp1.geom.create(rotatesString{2*N+1}, 'Rotate');
-        rotates{2*N+1}.selection('input').set('csol1');
-        rotates{2*N+1}.set('rot', sprintf('%s*180/pi',theta_seg{2}));
-        rotates{2*N+1}.set('keep', false)
-        rotates{2*N+1}.set('pos', [0 0])
-    
-    
-        mov1 = wp1.geom.create('mov1', 'Move');
-        mov1.selection('input').set(rotatesString{2*N+1});
-        
-        mov1.set('displ', {sprintf('%s - (l0 * rl1 * cos(%s) / 2)',x_seg{1}, theta_seg{2}) sprintf('Rady-(l0*rl1*sin(%s)/2)', theta_seg{2})});
-
-
-        %mov1.set('displ', sprintf('{%s - (l0 * rl1 * cos(%s) / 2) Rady - (l0 * rl1 * sin(%s) / 2)}', ...
-        %    x_seg{1}, theta_seg{2},  theta_seg{2}));
-
-
-        mov1.set('keep', false);
-    
-        mir4 = wp1.geom.create('mir4', 'Mirror');
-        mir4.selection('input').set('mov1');
-        mir4.set('pos', [0 0]);
-        mir4.set('axis', [1 -1]);
-        mir4.set('keep', true);
-    
-    
-        uni3 = wp1.geom.create('uni3', 'Union');
-        uni3.selection('input').set({'uni2','mov1','mir4'});
-        uni3.set('intbnd', false);
-
-
-        if pad_trigger
-
-            paramcurve3 = wp1.geom.create('pc3', 'ParametricCurve');
-            paramcurve3.set('parmin', 0);
-            paramcurve3.set('parmax', 1);
-            paramcurve3.set('pos', [-l_trans-l_pad/2 w0*rw2/2]);
-            paramcurve3.set('coord', {'s*l_trans' '0.5* (w_pad-w0*rw2)*(-2*s^3+3*s^2)'});
-            ls_pad = wp1.geom.create(sprintf('ls%i',4), 'LineSegment');
-            ls_pad.set('specify1', 'coord');
-            ls_pad.set('coord1', [-l_pad/2 w_pad/2]);
-            ls_pad.set('specify2', 'coord');
-            ls_pad.set('coord2', [l_pad/2 w_pad/2]);
-            paramcurve4 = wp1.geom.create('pc4', 'ParametricCurve');
-            paramcurve4.set('parmin', 0);
-            paramcurve4.set('parmax', 1);
-            paramcurve4.set('pos', [l_trans+l_pad/2 w0*rw2/2]);
-            paramcurve4.set('coord', {'-s*l_trans' '0.5* (w_pad-w0*rw2)*(-2*s^3+3*s^2)'});
-            mir5 = wp1.geom.create('mir5', 'Mirror');
-            mir5.selection('input').set({'pc3', 'pc4', sprintf('ls%i',3)});
-            mir5.set('pos', [0 0]);
-            mir5.set('axis', [0 1]);
-            mir5.set('keep', true);
-
-            rec_pad = wp1.geom.create(sprintf('r%i',6), 'Rectangle');
-            rec_pad.set('size', [l_pad+2*l_trans w0*rw2]);
-            rec_pad.set('base', 'center');
-            rec_pad.set('pos', [0 0]);       
-            csol1 = wp1.geom.create('csol2', 'ConvertToSolid');
-            csol1.selection('input').set({'pc3', 'pc4', sprintf('ls%i',4), 'mir5',sprintf('r%i',6)});
-
-
-            rotatesString{2*N+2} = sprintf('rot%i', 2*N+2);
-            rotates{2*N+2} = wp1.geom.create(rotatesString{2*N+2}, 'Rotate');
-            rotates{2*N+2}.selection('input').set('csol2');
-            rotates{2*N+2}.set('rot', sprintf('%s*180/pi', theta_seg{3}));
-            rotates{2*N+2}.set('keep', false)
-            rotates{2*N+2}.set('pos', [0 0])
-        
-        
-            mov2 = wp1.geom.create('mov2', 'Move');
-            mov2.selection('input').set(rotatesString{2*N+2});
-            mov2.set('displ', {sprintf('%s-(l0*rl2*cos(%s)/2)',x_seg{1},theta_seg{3}) sprintf('Rady-(l0*rl2*sin(%s)/2)',theta_seg{3})});
-            mov2.set('keep', false);
-        
-            mir6 = wp1.geom.create('mir6', 'Mirror');
-            mir6.selection('input').set('mov2');
-            mir6.set('pos', [0 0]);
-            mir6.set('axis', [1 1]);
-            mir6.set('keep', true);
-        
-        
-            uni4 = wp1.geom.create('uni4', 'Union');
-            uni4.selection('input').set({'uni3','mov2','mir6'});
-            uni4.set('intbnd', false);
-        end
-
-
-
-    end
-    
-    
-%}
-
-
     geom1.run;
     
     if plot_flag
@@ -701,11 +467,11 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         ylim([-4*l0,4*l0])
     end
 
-%{
+
        %% Selection
     %     hold on
         idx_fixed = [];
-        
+        disp('test');
         fprintf('%s-1\n','rotangle');
         
         disp(rotangle);
@@ -733,8 +499,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
                 x_select_1 = sprintf('%s - %s / 2', x_cut, l_select);
                 y_select_1 = sprintf('%s - %s / 2', y_cut, l_select);
                 x_select_2 = sprintf('%s + %s / 2', x_cut, l_select);
-                y_select_2 = sprintf('%s + %s / 2', y_cut, l_select);
-                
+                y_select_2 = sprintf('%s + %s / 2', y_cut, l_select);                
                 
                 for n = 1:N
                     R= ...
@@ -753,50 +518,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
                     idx = mphselectbox(model, 'geom1',rotatedCoords, 'edge');
     
                     idx_fixed = [idx_fixed, idx];
-                end
-                
-                %{
-                for n = 1:N
-                    
-                    angle_str = sprintf('(%d-1) * %s', n, rotangle);
-                    disp(angle_str);
-                    R = {...
-                        sprintf('cos(%s)', angle_str), sprintf('-sin(%s)', angle_str), '0';...
-                        sprintf('sin(%s)', angle_str), sprintf('cos(%s)', angle_str), '0';...
-                        '0', '0', '1'...
-                    };
-                    
-                    if mod(n, 2) == 1
-                        box_coordinates = {x_select_1, y_select_1, '0'; x_select_2, y_select_2, '0'}';
-                    else
-                        box_coordinates = {-x_select_1, y_select_1, '0'; -x_select_2, y_select_2, '0'}';
-                    end
-                    
-                    rotatedCoords_str = {
-                        sprintf('%s * %s + %s * %s + %s * %s', R{1, 1}, box_coordinates{1, 1}, R{1, 2}, box_coordinates{2, 1}, R{1, 3}, box_coordinates{3, 1}),...
-                        sprintf('%s * %s + %s * %s + %s * %s', R{1, 1}, box_coordinates{1, 2}, R{1, 2}, box_coordinates{2, 2}, R{1, 3}, box_coordinates{3, 2});...
-    
-                        sprintf('%s * %s + %s * %s + %s * %s', R{2, 1}, box_coordinates{1, 1}, R{2, 2}, box_coordinates{2, 1}, R{2, 3}, box_coordinates{3, 1}),...
-                        sprintf('%s * %s + %s * %s + %s * %s', R{2, 1}, box_coordinates{1, 2}, R{2, 2}, box_coordinates{2, 2}, R{2, 3}, box_coordinates{3, 2});...
-    
-                        sprintf('%s * %s + %s * %s + %s * %s', R{3, 1}, box_coordinates{1, 1}, R{3, 2}, box_coordinates{2, 1}, R{3, 3}, box_coordinates{3, 1}),...
-                        sprintf('%s * %s + %s * %s + %s * %s', R{3, 1}, box_coordinates{1, 2}, R{3, 2}, box_coordinates{2, 2}, R{3, 3}, box_coordinates{3, 2})...
-                    };
-                    
-                    rotatedCoords = cellfun(@(c) eval(c), rotatedCoords_str);
-                    idx = mphselectbox(model, 'geom1', rotatedCoords,'edge');
-                    
-                    idx_fixed = {idx_fixed, idx};
-                end
-                %}
-    
-    
-    
-    
-    
-    
-    
-    
+                end                
             end
         end
         sel1 = model.selection.create('sel1').geom(1);
@@ -1019,7 +741,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     iss1 = shell.feature('emm1').create('iss1', 'InitialStressandStrain', 2);
     iss1.set('Ni', {'stress*h_mbr' '0' '0' 'stress*h_mbr'});
 
-
+%{
 
     %% Mesh
     mesh = model.mesh.create('mesh', 'geom1');
