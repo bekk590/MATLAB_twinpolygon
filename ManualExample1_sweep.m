@@ -3,6 +3,8 @@ clc
 close all
 
 %% Binary tree parameters
+
+%Significant figures should be well stated.
 stress = 1.1e9;
 h_mbr = 20e-9;
 N = 4;
@@ -12,13 +14,13 @@ N_sol = 15;
 w0 = 200e-9;
 
 rl1 =  1/0.4;
-rl2 = 1/0.5;
+rl2 = 1/0.4;
 %rl2 =  744/(700*0.4);
 
 values = 2.59:0.001:2.60;
 %values = 2.59;
 
-rw1 =  1/sqrt(2);
+rw1 =  1/sqrt(3);
 rw2=   1/sqrt(3);
 
 wc = 2e-6;

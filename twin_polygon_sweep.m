@@ -81,11 +81,11 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     model.param.descr('theta', 'Branching angle (radians)');
     model.param.set('Diameter', 'sqrt((l0*rl1)^2+(l0*rl2)^2)');
     model.param.descr('Diameter', 'Diameter of circumscribed circle');
-    model.param.set('rad', 'Diameter/2');
+    model.param.set('rad', '(Diameter/2)');
     model.param.descr('rad', 'Radius of circumscribed circle');
-    model.param.set('Radx', 'rad*sin(atan(max(rl1/rl2,rl2/rl1))-pi/4)');
+    model.param.set('Radx', '(rad*sin(atan(max(rl1/rl2,rl2/rl1))-pi/4))');
     model.param.descr('Radx', 'x-coordinate of polygon vertex');
-    model.param.set('Rady', 'rad*cos(atan(max(rl1/rl2,rl2/rl1))-pi/4)');
+    model.param.set('Rady', '(rad*cos(atan(max(rl1/rl2,rl2/rl1))-pi/4))');
     model.param.descr('Rady', 'y-coordinate of polygon vertex');
 
     
@@ -93,15 +93,15 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     %disp(rotvale);
     %rw = 1/rW1;
     
-    l_seg{1} = 'lc/2';
+    l_seg{1} = '(lc/2)';
     w_seg{1} = 'wc';
     theta_seg{1} = '0';
     segmentsString{1} = 'r1';
 
-    x_seg{1} = 'lc/4';
+    x_seg{1} = '(lc/4)';
     y_seg{1} = '0';
     
-    l_clamp = '50 * h_mbr';
+    l_clamp = '(50 * h_mbr)';
     n_clamp_x = 10;
     n_clamp_y = 30;
     mesh_max = 1e-6;
@@ -119,14 +119,16 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
 %            j = j + 1;
 %        end
         j = i - 1;
+        %dl_rw = '0';
+        dl_rl = '0';
         fprintf('j = %d\n', j);
         %disp(theta_seg{ind_p});
         
         if i == 2            
-            l_seg{i} = 'l0*rl1';
-            w_seg{i} = 'w0*rw1';            
+            l_seg{i} = '(l0*rl1)';
+            w_seg{i} = '(w0*rw1)';            
             theta_seg{i} = sprintf('(%s + (pi/4))', theta_seg{j});
-            disp(theta_seg(i));
+            disp(eval(theta_seg{i}));
         end
         if i == 3 || i == 5   
             l_seg{i} = 'l0';
@@ -134,40 +136,69 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         
             theta_seg{i} = sprintf('(%s + (pi/4))', theta_seg{j});
             disp(eval(theta_seg{i}));
+                        
+            dl_seg = sprintf('(0.5* %s * min(abs(cot(%s)), abs(tan(%s))))', w_seg{i}, theta_seg{i}, theta_seg{i});
+            l_seg{i} = sprintf('(%s - %s)', l_seg{i}, dl_seg);
+            
         end
         if i == 4          
-            l_seg{i} = 'l0*rl2';
-            w_seg{i} = 'w0*rw2';            
+            l_seg{i} = '(l0*rl2)';
+            w_seg{i} = '(w0*rw2)';            
         
             theta_seg{i} = sprintf('(%s - pi/4 * 3)', theta_seg{j});
             disp(eval(theta_seg{i}));
         end
 
-        dl_rw = sprintf('0.5 * %s * (cos(pi/4) - (%s/%s)) / sin(pi/4)', w_seg{j}, w_seg{i}, w_seg{j});
+        dl_rw = sprintf('(0.5 * %s * (cos(pi/4) - (%s/%s)) / sin(pi/4))', w_seg{j}, w_seg{i}, w_seg{j});
+        %dl_rw = '0';
+
         if i == 5
             disp(w_seg{j});
             disp(dl_rw);      
         end        
 
         if eval(dl_rw)<0
-            dl_rw = 0;
+            dl_rw = '0';
+            fprintf('i = %d\n', i);
+            dl_rl = sprintf('(0.5 * %s * (cos(pi/4) - (%s/%s)) / sin(pi/4))', w_seg{i}, w_seg{j}, w_seg{i});
+            disp(eval('dl_rl'));
         end
 
-        if i == 5
-            disp(w_seg{j});
-            disp(dl_rw);
-            desp;
-        end
+%        if i == 3
+%            disp('-----');
+%            disp(eval(sprintf('%s',w_seg{j})))
+%            disp(eval(sprintf('%s',w_seg{i})))
+%            k = sprintf('%s/%s',w_seg{i}, w_seg{j});
+%            disp(k);
+%            disp(eval(k));
+%            disp(eval(dl_rw));
+%            desp;
+%            disp(eval(sprintf('cos(%s)', theta_seg{j})))
+%            disp(eval(sprintf('(%s/2 - %s) * cos(%s)', l_seg{j}, dl_rw, theta_seg{j})))
+%            disp(eval(sprintf('(%s/2 + %s) * cos(%s)', l_seg{j}, dl_rw, theta_seg{j})))
+%            disp(eval(sprintf('%s + (%s/2-%s) * cos(%s)+%s/2 * cos(%s)', x_seg{j},l_seg{j}, dl_rw, theta_seg{j}, l_seg{i},  theta_seg{i} )))
+%            disp(eval(sprintf('%s + (%s/2+%s) * cos(%s)', x_seg{j},l_seg{j}, dl_rw, theta_seg{j})))
+%            %desp;
+%        end
+        
+       
 
         
-
-        x_seg{i} = sprintf('%s + (%s/2-%s) * cos(%s) + %s/2 * cos(%s)', x_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i},  theta_seg{i} );
+        x_seg{i} = sprintf('%s + (%s/2-%s) * cos(%s) + (%s/2-%s) * cos(%s)', x_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i}, dl_rl, theta_seg{i} );
+        
+        
         if i == 4
-            y_seg{i} = sprintf('%s - (%s/2-%s) * sin(%s) + %s/2 * sin(%s)', y_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i},  theta_seg{i} );
+            y_seg{i} = sprintf('%s - (%s/2-%s) * sin(%s) + (%s/2-%s) * sin(%s)', y_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i}, dl_rl,  theta_seg{i} );
         else
-            y_seg{i} = sprintf('%s + (%s/2-%s) * sin(%s) + %s/2 * sin(%s)', y_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i},  theta_seg{i} );
+            y_seg{i} = sprintf('%s + (%s/2-%s) * sin(%s) + (%s/2-%s) * sin(%s)', y_seg{j}, l_seg{j}, dl_rw, theta_seg{j}, l_seg{i}, dl_rl,  theta_seg{i} );
         end
-        disp(x_seg{i});
+        if i == 5
+            disp(eval(x_seg{i}));
+            disp(eval(y_seg{i}));
+            disp(eval(sprintf('%s + (%s/2) * cos(%s) + %s/2 * cos(%s)', x_seg{j}, l_seg{j}, theta_seg{j}, l_seg{i},  theta_seg{i} )));
+            disp(eval(sprintf('%s + (%s/2) * sin(%s) + %s/2 * sin(%s)', y_seg{j}, l_seg{j}, theta_seg{j}, l_seg{i},  theta_seg{i} )));
+            %desp;
+        end
     end
 
 %    model.param.set('Qint', sprintf('%d',Qint), 'Intrinsic Q');
