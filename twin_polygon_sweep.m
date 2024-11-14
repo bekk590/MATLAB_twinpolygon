@@ -42,7 +42,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     f0 = 100e3;
     %l_trans = 5e-6;
     %N_seg = 2^(N+1) - 1 + 2^N; % number of the segments 
-    rotangle = (2*pi/N);
+    rotangle = (pi);
     %rotvalue = (2*pi/N);
     Diameter = sqrt((l0*rl1)^2+(l0*rl2)^2);
     rad = Diameter/2;
@@ -75,7 +75,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     model.param.set('lc', sprintf('%d[m]', lc), 'Length of the coupler segment');
     model.param.set('Qint', '12500 * (h_mbr/100e-9[m])');
     model.param.descr('Qint', 'Intrinsic Q');    
-    model.param.set('rotangle', '(2*pi/N)');
+    model.param.set('rotangle', '(pi)');
     model.param.descr('rotangle', 'Angle of rotation');
     model.param.set('theta', '((pi-rotangle)/2)');
     model.param.descr('theta', 'Branching angle (radians)');
@@ -476,49 +476,50 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         
         disp(rotangle);
         
-        for i = 1:1
-            if i > 0
-                l_cut =  sprintf('%s / max(abs(cos(%s)), abs(sin(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
-                theta_mod = sprintf('mod(%s, 2*pi)', theta_seg{i});
-                dl_seg = sprintf('0.5 * %s * min(abs(cot(%s)), abs(tan(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
-                dx_cut = sprintf('%s * fix(sqrt(2) * cos(%s)) / 2', l_cut, theta_mod);
-                dy_cut = sprintf('%s * fix(sqrt(2) * sin(%s)) / 2', l_cut, theta_mod);
-                if mod(eval(theta_mod),pi/4) == 0 && mod(eval(theta_mod), pi/2) ~= 0
-                    if cos(theta_mod) < 1e-10
-                        dx_cut = '0';
-                    else
-                        dx_cut = sprintf('sign(cos(%s)) * %s / 2', theta_mod, l_cut);
-                    end
-                dy_cut = 0;
+        for i = [3,5]
+            l_cut =  sprintf('%s / max(abs(cos(%s)), abs(sin(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
+            theta_mod = sprintf('mod(%s, 2*pi)', theta_seg{i});
+            dl_seg = sprintf('0.5 * %s * min(abs(cot(%s)), abs(tan(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
+            dx_cut = sprintf('%s * fix(sqrt(2) * cos(%s)) / 2', l_cut, theta_mod);
+            dy_cut = sprintf('%s * fix(sqrt(2) * sin(%s)) / 2', l_cut, theta_mod);
+
+            if mod(eval(theta_mod),pi/4) == 0 && mod(eval(theta_mod), pi/2) ~= 0
+                if cos(theta_mod) < 1e-10
+                    dx_cut = '0';
+                else
+                    dx_cut = sprintf('sign(cos(%s)) * %s / 2', theta_mod, l_cut);
                 end
-                x_cut = sprintf('%s + (%s - 2 * %s) * cos(%s) / 2 + %s', ...
-                    x_seg{i}, l_seg{i}, dl_seg, theta_seg{i}, dx_cut);
-                y_cut = sprintf('%s + (%s - 2 * %s) * sin(%s) / 2 + %s', ...
-                    y_seg{i}, l_seg{i}, dl_seg, theta_seg{i}, dy_cut);
-                l_select = sprintf('%s + 1e-9', l_cut);
-                x_select_1 = sprintf('%s - %s / 2', x_cut, l_select);
-                y_select_1 = sprintf('%s - %s / 2', y_cut, l_select);
-                x_select_2 = sprintf('%s + %s / 2', x_cut, l_select);
-                y_select_2 = sprintf('%s + %s / 2', y_cut, l_select);                
-                
-                for n = 1:N
-                    R= ...
-                    [...
-                        cos((n-1)*rotangle), -sin((n-1)*rotangle), 0;...
-                        sin((n-1)*rotangle), cos((n-1)*rotangle),0;...
-                        0, 0, 1 ...
-                    ];
-                    if mod(n,2)==1
-                        box_coordinates = [eval(x_select_1), eval(y_select_1), 0; eval(x_select_2), eval(y_select_2), 0]';
-                    else
-                        box_coordinates = [(-1)*eval(x_select_1), eval(y_select_1), 0; (-1)*eval(x_select_2), eval(y_select_2), 0]';
-                    end
+            dy_cut = 0;
+            end
+            x_cut = sprintf('%s + (%s - 2 * %s) * cos(%s) / 2 + %s', ...
+                x_seg{i}, l_seg{i}, dl_seg, theta_seg{i}, dx_cut);
+            y_cut = sprintf('%s + (%s - 2 * %s) * sin(%s) / 2 + %s', ...
+                y_seg{i}, l_seg{i}, dl_seg, theta_seg{i}, dy_cut);
+            l_select = sprintf('%s + 1e-9', l_cut);
+            x_select_1 = sprintf('%s - %s / 2', x_cut, l_select);
+            y_select_1 = sprintf('%s - %s / 2', y_cut, l_select);
+            x_select_2 = sprintf('%s + %s / 2', x_cut, l_select);
+            y_select_2 = sprintf('%s + %s / 2', y_cut, l_select);                
+            
+            for n = 1:2
+                R= ...
+                [...
+                    cos((n-1)*rotangle), -sin((n-1)*rotangle), 0;...
+                    sin((n-1)*rotangle), cos((n-1)*rotangle),0;...
+                    0, 0, 1 ...
+                ];
+                box_coordinates = [eval(x_select_1), eval(y_select_1), 0; eval(x_select_2), eval(y_select_2), 0]';
+                rotatedCoords = (R*box_coordinates);
+                idx = mphselectbox(model, 'geom1',rotatedCoords, 'edge');
+                idx_fixed = [idx_fixed, idx];
+
+                if i == 3
+                    box_coordinates = [eval(sprintf('2*(%s) - (%s)', posx, x_select_1)), eval(sprintf('2*(%s) - (%s)', posy, y_select_1)), 0;...
+                        eval(sprintf('2*(%s) - (%s)', posx, x_select_2)), eval(sprintf('2*(%s) - (%s)', posy, y_select_2)), 0]';
                     rotatedCoords = (R*box_coordinates);
-    
                     idx = mphselectbox(model, 'geom1',rotatedCoords, 'edge');
-    
                     idx_fixed = [idx_fixed, idx];
-                end                
+                end
             end
         end
         sel1 = model.selection.create('sel1').geom(1);
@@ -528,118 +529,110 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         idx_clamps_alledges = [];
     
     
-        for i = 1:1
-            if i > 0
-                l_cut =  sprintf('%s / max(abs(cos(%s)), abs(sin(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
-                theta_mod = sprintf('mod(%s, 2*pi)', theta_seg{i});
-                dl_seg = sprintf('0.5 * %s * min(abs(cot(%s)), abs(tan(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
-                dx_cut = sprintf('%s * fix(sqrt(2) * cos(%s)) / 2', l_cut, theta_mod);
-                dy_cut = sprintf('%s * fix(sqrt(2) * sin(%s)) / 2', l_cut, theta_mod);
-                if mod(eval(theta_mod),pi/4) == 0 && mod(eval(theta_mod), pi/2) ~= 0
-                    if cos(theta_mod) < 1e-10
-                        dx_cut = '0';
-                    else
-                        dx_cut = sprintf('sign(cos(%s)) * %s / 2', theta_mod, l_cut);
-                    end
-                dy_cut = 0;
+        for i = [3,5]
+            l_cut =  sprintf('%s / max(abs(cos(%s)), abs(sin(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
+            theta_mod = sprintf('mod(%s, 2*pi)', theta_seg{i});
+            dl_seg = sprintf('0.5 * %s * min(abs(cot(%s)), abs(tan(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
+            dx_cut = sprintf('%s * fix(sqrt(2) * cos(%s)) / 2', l_cut, theta_mod);
+            dy_cut = sprintf('%s * fix(sqrt(2) * sin(%s)) / 2', l_cut, theta_mod);
+            if mod(eval(theta_mod),pi/4) == 0 && mod(eval(theta_mod), pi/2) ~= 0
+                if cos(theta_mod) < 1e-10
+                    dx_cut = '0';
+                else
+                    dx_cut = sprintf('sign(cos(%s)) * %s / 2', theta_mod, l_cut);
                 end
-                x_cut = sprintf('%s + (%s - 2 * %s - %s / 2) * cos(%s) / 2 ', ...
-                    x_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i});
-                y_cut = sprintf('%s + (%s - 2 * %s - %s / 2) * sin(%s) / 2 ', ...
-                    y_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i});
-                l_select = sprintf('%s + %s + 1e-9', l_clamp, l_cut);
-                x_select_1 = sprintf('%s - %s / 2', x_cut, l_select);
-                y_select_1 = sprintf('%s - %s / 2', y_cut, l_select);
-                x_select_2 = sprintf('%s + %s / 2', x_cut, l_select);
-                y_select_2 = sprintf('%s + %s / 2', y_cut, l_select);
-    
-    
-                for n = 1:N
-                    R= ...
-                    [...
-                        cos((n-1)*rotangle), -sin((n-1)*rotangle), 0;...
-                        sin((n-1)*rotangle), cos((n-1)*rotangle),0;...
-                        0, 0, 1 ...
-                    ];    
-                    if mod(n,2)==1
-                        box_coordinates = [eval(x_select_1), eval(y_select_1), 0; eval(x_select_2), eval(y_select_2), 0]';
-                    else
-                        box_coordinates = [(-1)*eval(x_select_1), eval(y_select_1), 0; (-1)*eval(x_select_2), eval(y_select_2), 0]';
-                    end    
-                    rotatedCoords = (R*box_coordinates);    
-                    idx = mphselectbox(model, 'geom1',rotatedCoords, 'boundary');    
+            dy_cut = 0;
+            end
+            x_cut = sprintf('%s + (%s - 2 * %s - %s / 2) * cos(%s) / 2 ', ...
+                x_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i});
+            y_cut = sprintf('%s + (%s - 2 * %s - %s / 2) * sin(%s) / 2 ', ...
+                y_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i});
+            l_select = sprintf('%s + %s + 1e-9', l_clamp, l_cut);
+            x_select_1 = sprintf('%s - %s / 2', x_cut, l_select);
+            y_select_1 = sprintf('%s - %s / 2', y_cut, l_select);
+            x_select_2 = sprintf('%s + %s / 2', x_cut, l_select);
+            y_select_2 = sprintf('%s + %s / 2', y_cut, l_select);
+
+
+            for n = 1:2
+                R= ...
+                [...
+                    cos((n-1)*rotangle), -sin((n-1)*rotangle), 0;...
+                    sin((n-1)*rotangle), cos((n-1)*rotangle),0;...
+                    0, 0, 1 ...
+                ];    
+
+                box_coordinates = [eval(x_select_1), eval(y_select_1), 0; eval(x_select_2), eval(y_select_2), 0]';
+  
+                rotatedCoords = (R*box_coordinates);    
+                idx = mphselectbox(model, 'geom1',rotatedCoords, 'boundary');    
+                idx_clamps = [idx_clamps, idx];
+                idx = mphselectbox(model, 'geom1',rotatedCoords, 'edge');    
+                idx_clamps_alledges = [idx_clamps_alledges, idx];
+
+                if i == 3
+                    box_coordinates = [eval(sprintf('2*(%s) - (%s)', posx, x_select_1)), eval(sprintf('2*(%s) - (%s)', posy, y_select_1)), 0;...
+                        eval(sprintf('2*(%s) - (%s)', posx, x_select_2)), eval(sprintf('2*(%s) - (%s)', posy, y_select_2)), 0]';
+                    rotatedCoords = (R*box_coordinates);
+                    idx = mphselectbox(model, 'geom1',rotatedCoords, 'boundary');
                     idx_clamps = [idx_clamps, idx];
-                end
-    
-                for n = 1:N
-                    R= ...
-                    [...
-                        cos((n-1)*rotangle), -sin((n-1)*rotangle), 0;...
-                        sin((n-1)*rotangle), cos((n-1)*rotangle),0;...
-                        0, 0, 1 ...
-                    ];
-                    if mod(n,2)==1
-                        box_coordinates = [eval(x_select_1), eval(y_select_1), 0; eval(x_select_2), eval(y_select_2), 0]';
-                    else
-                        box_coordinates = [(-1)*eval(x_select_1), eval(y_select_1), 0; (-1)*eval(x_select_2), eval(y_select_2), 0]';
-                    end
-                    rotatedCoords = (R*box_coordinates);    
                     idx = mphselectbox(model, 'geom1',rotatedCoords, 'edge');    
                     idx_clamps_alledges = [idx_clamps_alledges, idx];
                 end
-    
-            end
+             end
         end
         sel2 = model.selection.create('sel2').geom(2);
         sel2.set(idx_clamps);
         sel2.label('clamping pads');
         
         idx_clamps_x_inner = [];
-        for i = 1:1
-            if i > 0
-                l_cut =  sprintf('%s / max(abs(cos(%s)), abs(sin(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
-                theta_mod = sprintf('mod(%s, 2*pi)', theta_seg{i});
-                dl_seg = sprintf('0.5 * %s * min(abs(cot(%s)), abs(tan(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
-                dx_cut = sprintf('%s * fix(sqrt(2) * cos(%s)) / 2', l_cut, theta_mod);
-                dy_cut = sprintf('%s * fix(sqrt(2) * sin(%s)) / 2', l_cut, theta_mod);
-                if mod(eval(theta_mod),pi/4) == 0 && mod(eval(theta_mod), pi/2) ~= 0
-                    if cos(theta_mod) < 1e-10
-                        dx_cut = '0';
-                    else
-                        dx_cut = sprintf('sign(cos(%s)) * %s / 2', theta_mod, l_cut);
-                    end
-                dy_cut = 0;
+
+        for i = [3,5]
+
+            l_cut =  sprintf('%s / max(abs(cos(%s)), abs(sin(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
+            theta_mod = sprintf('mod(%s, 2*pi)', theta_seg{i});
+            dl_seg = sprintf('0.5 * %s * min(abs(cot(%s)), abs(tan(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
+            dx_cut = sprintf('%s * fix(sqrt(2) * cos(%s)) / 2', l_cut, theta_mod);
+            dy_cut = sprintf('%s * fix(sqrt(2) * sin(%s)) / 2', l_cut, theta_mod);
+            if mod(eval(theta_mod),pi/4) == 0 && mod(eval(theta_mod), pi/2) ~= 0
+                if cos(theta_mod) < 1e-10
+                    dx_cut = '0';
+                else
+                    dx_cut = sprintf('sign(cos(%s)) * %s / 2', theta_mod, l_cut);
                 end
-                x_cut = sprintf('%s + (%s - 2 * %s - %s) * cos(%s) / 2 - %s', ...
-                    x_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i}, dx_cut);
-                y_cut = sprintf('%s + (%s - 2 * %s - %s) * sin(%s) / 2 - %s', ...
-                    y_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i}, dy_cut);
-                l_select = sprintf('%s + 1e-9', l_cut);
-                x_select_1 = sprintf('%s - %s / 2', x_cut, l_select);
-                y_select_1 = sprintf('%s - %s / 2', y_cut, l_select);
-                x_select_2 = sprintf('%s + %s / 2', x_cut, l_select);
-                y_select_2 = sprintf('%s + %s / 2', y_cut, l_select);
-    
-                for n = 1:N
-                    R= ...
-                    [...
-                        cos((n-1)*rotangle), -sin((n-1)*rotangle), 0;...
-                        sin((n-1)*rotangle), cos((n-1)*rotangle),0;...
-                        0, 0, 1 ...
-                    ];
-                    if mod(n,2)==1
-                        box_coordinates = [eval(x_select_1), eval(y_select_1), 0; eval(x_select_2), eval(y_select_2), 0]';
-                    else
-                        box_coordinates = [(-1)*eval(x_select_1), eval(y_select_1), 0; (-1)*eval(x_select_2), eval(y_select_2), 0]';
-                    end
-                    rotatedCoords = (R*box_coordinates);
-    
-                    idx = mphselectbox(model, 'geom1',rotatedCoords, 'edge');
-    
-                    idx_clamps_x_inner = [idx_clamps_x_inner, idx];
-                end
-                
+            dy_cut = 0;
             end
+            x_cut = sprintf('%s + (%s - 2 * %s - %s) * cos(%s) / 2 - %s', ...
+                x_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i}, dx_cut);
+            y_cut = sprintf('%s + (%s - 2 * %s - %s) * sin(%s) / 2 - %s', ...
+                y_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i}, dy_cut);
+            l_select = sprintf('%s + 1e-9', l_cut);
+            x_select_1 = sprintf('%s - %s / 2', x_cut, l_select);
+            y_select_1 = sprintf('%s - %s / 2', y_cut, l_select);
+            x_select_2 = sprintf('%s + %s / 2', x_cut, l_select);
+            y_select_2 = sprintf('%s + %s / 2', y_cut, l_select);
+
+            for n = 1:2
+                R= ...
+                [...
+                    cos((n-1)*rotangle), -sin((n-1)*rotangle), 0;...
+                    sin((n-1)*rotangle), cos((n-1)*rotangle),0;...
+                    0, 0, 1 ...
+                ];
+                box_coordinates = [eval(x_select_1), eval(y_select_1), 0; eval(x_select_2), eval(y_select_2), 0]';
+                rotatedCoords = (R*box_coordinates);
+                idx = mphselectbox(model, 'geom1',rotatedCoords, 'edge');
+                idx_clamps_x_inner = [idx_clamps_x_inner, idx];            
+
+                if i == 3
+                    box_coordinates = [eval(sprintf('2*(%s) - (%s)', posx, x_select_1)), eval(sprintf('2*(%s) - (%s)', posy, y_select_1)), 0;...
+                        eval(sprintf('2*(%s) - (%s)', posx, x_select_2)), eval(sprintf('2*(%s) - (%s)', posy, y_select_2)), 0]';
+                    rotatedCoords = (R*box_coordinates);
+                    idx = mphselectbox(model, 'geom1',rotatedCoords, 'edge');
+                    idx_clamps_x_inner = [idx_clamps_x_inner, idx];  
+                end
+            end
+            
         end
         idx_clamps_y = setdiff(idx_clamps_alledges,[idx_fixed, idx_clamps_x_inner]);
         sel3 = model.selection.create('sel3').geom(1);
