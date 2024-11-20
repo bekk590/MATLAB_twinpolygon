@@ -638,9 +638,61 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         sel3 = model.selection.create('sel3').geom(1);
         sel3.set(idx_clamps_y);
         sel3.label('clamping edges y');
+
+        idx_clamps_support = [];
+        for i = [3,5]
+            l_cut =  sprintf('%s / max(abs(cos(%s)), abs(sin(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
+            theta_mod = sprintf('mod(%s, 2*pi)', theta_seg{i});
+            dl_seg = sprintf('0.5 * %s * min(abs(cot(%s)), abs(tan(%s)))', w_seg{i}, theta_seg{i}, theta_seg{i});
+            dx_cut = sprintf('%s * fix(sqrt(2) * cos(%s)) / 2', l_cut, theta_mod);
+            dy_cut = sprintf('%s * fix(sqrt(2) * sin(%s)) / 2', l_cut, theta_mod);
+            if mod(eval(theta_mod),pi/4) == 0 && mod(eval(theta_mod), pi/2) ~= 0
+                if cos(theta_mod) < 1e-10
+                    dx_cut = '0';
+                else
+                    dx_cut = sprintf('sign(cos(%s)) * %s / 2', theta_mod, l_cut);
+                end
+            dy_cut = 0;
+            end
+            x_cut = sprintf('%s', ...
+                x_seg{i});
+            y_cut = sprintf('%s', ...
+                y_seg{i});
+            l_select = sprintf('%s + %s + 1e-9', l_seg{i}, l_cut);
+            x_select_1 = sprintf('%s - %s / 2', x_cut, l_select);
+            y_select_1 = sprintf('%s - %s / 2', y_cut, l_select);
+            x_select_2 = sprintf('%s + %s / 2', x_cut, l_select);
+            y_select_2 = sprintf('%s + %s / 2', y_cut, l_select);
+
+
+            for n = 1:2
+                R= ...
+                [...
+                    cos((n-1)*rotangle), -sin((n-1)*rotangle), 0;...
+                    sin((n-1)*rotangle), cos((n-1)*rotangle),0;...
+                    0, 0, 1 ...
+                ];    
+
+                box_coordinates = [eval(x_select_1), eval(y_select_1), 0; eval(x_select_2), eval(y_select_2), 0]';
+  
+                rotatedCoords = (R*box_coordinates);    
+                idx = mphselectbox(model, 'geom1',rotatedCoords, 'boundary');    
+                idx_clamps_support = [idx_clamps_support, idx];
+
+                if i == 3
+                    box_coordinates = [eval(sprintf('2*(%s) - (%s)', posx, x_select_1)), eval(sprintf('2*(%s) - (%s)', posy, y_select_1)), 0;...
+                        eval(sprintf('2*(%s) - (%s)', posx, x_select_2)), eval(sprintf('2*(%s) - (%s)', posy, y_select_2)), 0]';
+                    rotatedCoords = (R*box_coordinates);
+                    idx = mphselectbox(model, 'geom1',rotatedCoords, 'boundary');
+                    idx_clamps_support = [idx_clamps_support, idx];
+
+                end
+             end
+        end
+
         idx_all = mphselectbox(model, 'geom1',...
-                    [-((2+rl1+rl2)*l0),-(2*l0+(rl1+rl2)*l0),0;...
-                     (2*l0+(rl1+rl2)*l0),(2*l0+(rl1+rl2)*l0),0]', 'edge');
+                    [-((2+rl1+rl2)*l0)-lc,-(2*l0+(rl1+rl2)*l0),0;...
+                     (2*l0+(rl1+rl2)*l0)+lc,(2*l0+(rl1+rl2)*l0),0]', 'edge');
         idx_segments = setdiff(idx_all, idx_clamps_alledges);
         
         sel4 = model.selection.create('sel4').geom(1);
@@ -656,19 +708,23 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         sel5.set(idx_segments_area);
         sel5.label('beam area');
 
-        idx_polygon_boundary = mphselectbox(model, 'geom1',...
+        idx_support = setdiff(idx_clamps_support,idx_clamps);
+        sel6 = model.selection.create('sel6').geom(2);
+        sel6.set(idx_support);
+        sel6.label('support area');
+
+        idx_center_area = mphselectbox(model, 'geom1',...
                     [-((rw1+rw2)*w0+Rady),-((rw1+rw2)*w0+Rady),0;...
                      ((rw1+rw2)*w0+Rady),((rw1+rw2)*w0+Rady),0]', 'boundary');
-        idx_polygon_area = setdiff(idx_polygon_boundary, idx_clamps);
-        
-        sel6 = model.selection.create('sel6').geom(2);
-        sel6.set(idx_polygon_area);
-        sel6.label('polygon area'); 
-
-        idx_support_area = setdiff(idx_segments_area, idx_polygon_area);
         sel7 = model.selection.create('sel7').geom(2);
-        sel7.set(idx_support_area);
-        sel7.label('support area');
+        sel7.set(idx_center_area);
+        sel7.label('center area'); 
+
+        idx_polygon_area = setdiff(idx_all_boundaries, [idx_clamps_support, idx_center_area]);
+        
+        sel8 = model.selection.create('sel8').geom(2);
+        sel8.set(idx_polygon_area);
+        sel8.label('polygon area'); 
 
 
 
@@ -714,11 +770,11 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
 
     Maxpolygon = model.component('mod1').cpl.create('maxop2', 'Maximum');
     Maxpolygon.selection.geom('geom1', 2);
-    Maxpolygon.selection.named('sel6');
+    Maxpolygon.selection.named('sel8');
 
     Maxsupport = model.component('mod1').cpl.create('maxop3', 'Maximum');
     Maxsupport.selection.geom('geom1', 2);
-    Maxsupport.selection.named('sel7');
+    Maxsupport.selection.named('sel6');
     
     var1 = model.component('mod1').variable.create('var1');
     var1.set('Qm', 'Qint * kin_energy / max(bend_energy_op, bend_energy_ip)');
@@ -734,7 +790,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     iss1 = shell.feature('emm1').create('iss1', 'InitialStressandStrain', 2);
     iss1.set('Ni', {'stress*h_mbr' '0' '0' 'stress*h_mbr'});
 
-%{
+
 
     %% Mesh
     mesh = model.mesh.create('mesh', 'geom1');
@@ -938,17 +994,17 @@ values_str = values_str(1:end-1);
 filename = sprintf('periresult_%s.jpg', values_str);
 frame = getframe(figTable);
 imwrite(frame.cdata, filename);
-%}
+
 
 mphsave(model, 'Practice_Resonator_twin_practice.mph')
 
 %[Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = [1,1,1,1,1,1,1];
-Freqs = 1;
-Q = 1;
-m_eff =1;
-S_F = 1;
-eta = 1;
-rl2_match = 1;
-Q_match = 1;
+%Freqs = 1;
+%Q = 1;
+%m_eff =1;
+%S_F = 1;
+%eta = 1;
+%rl2_match = 1;
+%Q_match = 1;
 
 end

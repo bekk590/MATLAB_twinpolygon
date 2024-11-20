@@ -9,16 +9,16 @@ stress = 1.1e9;
 h_mbr = 20e-9;
 N = 4;
 l0 = 700e-6*0.4;
-N_sol = 15;
+N_sol = 20;
 
 w0 = 200e-9;
 
 
 rl1 =  1/0.4;
-rl2 = 1/0.5;
+rl2 = 1/0.4;
 %rl2 =  744/(700*0.4);
 
-values = 2.59:0.001:2.60;
+values = 2.5;
 %values = 2.59;
 
 %Since this is before modification, rw1 and rw2 should be the same value
@@ -60,7 +60,7 @@ xlabel('Frequency (Hz)')
 ylabel('Q')
 ax = gca;
 ax.YScale = 'log';
-
+%}
 
 figure
 set(gcf, 'color', 'w')
@@ -78,5 +78,3 @@ ylim([minQ, maxQ]);
 minParam = min(rl2_match) * 0.995; 
 maxParam = max(rl2_match) * 1.005; 
 xlim([minParam, maxParam]);  
-
-%}
