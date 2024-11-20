@@ -406,10 +406,10 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         end
     end
 
-    posx = sprintf('(abs((%s + %s * cos(%s) / 2) + (%s - %s * cos(%s) / 2)) / 2)', ...
+    posx = sprintf('(((%s + %s * cos(%s) / 2) + (%s - %s * cos(%s) / 2)) / 2)', ...
         x_seg{4}, l_seg{4}, theta_seg{4}, x_seg{2}, l_seg{2}, theta_seg{2});
     
-    posy = sprintf('(abs((%s + %s * sin(%s) / 2) + (%s - %s * sin(%s) / 2)) / 2)', ...
+    posy = sprintf('(((%s + %s * sin(%s) / 2) + (%s - %s * sin(%s) / 2)) / 2)', ...
         y_seg{4}, l_seg{4}, theta_seg{4}, y_seg{2}, l_seg{2}, theta_seg{2});
 
     rotatesString{3} = sprintf('rot%i', 3);
@@ -868,9 +868,10 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     rl2_match = [];
     S_F_match = [];
     D_Q_match = [];
-%{
+
     for setparamator = values
-        model.param.set('rl2', setparamator);
+        model.param.set('rl2', sprintf('%f',setparamator));
+
         disp(rl2);
         model.study('std1').run;
 
@@ -996,7 +997,7 @@ filename = sprintf('periresult_%s.jpg', values_str);
 frame = getframe(figTable);
 imwrite(frame.cdata, filename);
 
-%}
+
 mphsave(model, 'Practice_Resonator_twin_practice.mph')
 
 %[Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = [1,1,1,1,1,1,1];
