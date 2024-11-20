@@ -8,17 +8,17 @@ close all
 stress = 1.1e9;
 h_mbr = 20e-9;
 N = 4;
-l0 = 700e-6*0.4;
+l0 = (700e-6)*0.4;
 N_sol = 20;
 
 w0 = 200e-9;
 
 
 rl1 =  1/0.4;
-rl2 = 1/0.4;
+rl2 = 2.6;
 %rl2 =  744/(700*0.4);
 
-values = 2.5;
+values = 2.585:0.001:2.605;
 %values = 2.59;
 
 %Since this is before modification, rw1 and rw2 should be the same value
@@ -42,7 +42,7 @@ wc = 600e-9;
 
 
 
-pad_trigger = 1;%0: 2_pads, 1:4_pads
+pad_trigger = 0;%0: 2_pads, 1:4_pads
 
 
 [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...

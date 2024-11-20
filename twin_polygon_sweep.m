@@ -868,9 +868,10 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     rl2_match = [];
     S_F_match = [];
     D_Q_match = [];
-
+%{
     for setparamator = values
         model.param.set('rl2', setparamator);
+        disp(rl2);
         model.study('std1').run;
 
         %% Global evaluation
@@ -995,7 +996,7 @@ filename = sprintf('periresult_%s.jpg', values_str);
 frame = getframe(figTable);
 imwrite(frame.cdata, filename);
 
-
+%}
 mphsave(model, 'Practice_Resonator_twin_practice.mph')
 
 %[Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = [1,1,1,1,1,1,1];
