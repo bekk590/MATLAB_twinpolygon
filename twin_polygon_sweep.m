@@ -332,7 +332,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         mir1.set('keep', true);
         
         rec_pad = wp1.geom.create(sprintf('r%i',8), 'Rectangle');
-        rec_pad.set('size', [l_pad+2*l_trans w0*rw1]);
+        rec_pad.set('size', {'l_pad+2*l_trans' 'w0*rw1'});
         rec_pad.set('base', 'center');
         rec_pad.set('pos', [0 0]);       
         csol1 = wp1.geom.create('csol1', 'ConvertToSolid');
@@ -870,7 +870,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     D_Q_match = [];
 
     for setparamator = values
-        model.param.set('rl2', sprintf('%f',setparamator));
+        model.param.set('rl2', sprintf('%d',setparamator));
 
         disp(rl2);
         model.study('std1').run;

@@ -15,15 +15,15 @@ w0 = 200e-9;
 
 
 rl1 =  1/0.4;
-rl2 = 3.0;
+rl2 = 3.2;
 %rl2 =  744/(700*0.4);
 
-values = 2.585:0.001:2.605;
+values = 2.585:0.001:2.585;
 %values = 2.59;
 
 %Since this is before modification, rw1 and rw2 should be the same value
-rw1 =  1/sqrt(3);
-rw2=   1/sqrt(3);
+rw1 =  1/sqrt(2);
+rw2=   1/sqrt(2);
 
 wc = 2e-6;
 lc = 700e-6;
@@ -35,12 +35,8 @@ w_pad = 4e-6;
 plot_flag = 1;
 plot_op_flag = 1;
 
-lc = 350e-6*0.4;
-wc = 600e-9;
-
-
-
-
+lc = 11.1e-6;
+wc = 2.1e-6;
 
 pad_trigger = 0;%0: 2_pads, 1:4_pads
 
