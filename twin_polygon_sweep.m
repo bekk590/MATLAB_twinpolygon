@@ -870,9 +870,8 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     D_Q_match = [];
 
     for setparamator = values
-        model.param.set('rl2', sprintf('%d',setparamator));
-
-        disp(rl2);
+        %model.param.set('rl2', setparamator);
+        model.param.set('rl2', sprintf('%f',setparamator));
         model.study('std1').run;
 
         %% Global evaluation
@@ -891,11 +890,13 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         m_eff = W_kin ./ ((2*pi*Freqs).^2 .* mphglobal(model,'maxop1(shell.disp)').^2);
         S_F = 8*pi * 1.38e-23 * 300 * m_eff .* Freqs ./ Q;
     %}
+
+
         eta = mphglobal(model, 'sqrt(maxop1(w^2)/maxop1(u^2+v^2))') > 1;
         amp_peri = mphglobal(model, 'sqrt(maxop2(w^2)/maxop3(w^2))') > 10;
+
         ind_ip = eta < 1;
-        %ind_op = find(eta == 1);
-        ind_op = find(eta == 1 & amp_peri == 1);
+
         Freqs = mphglobal(model, 'shell.freq');
         W_bend = mphglobal(model, 'bend_energy_op');
         W_bend_ip = mphglobal(model, 'bend_energy_ip');
@@ -905,6 +906,12 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         m_eff = W_kin ./ ((2*pi*Freqs).^2 .* mphglobal(model, 'maxop1(shell.disp)').^2);
         S_F = 8 * pi * 1.38e-23 * 300 * m_eff .* Freqs ./ Q;
         DQ = W_kin ./ W_bend;
+
+        DQ_cutt_off = mphglobal(model, 'DQ') > 20;
+
+        %ind_op = find(eta == 1);
+        ind_op = find(eta == 1 & amp_peri == 1 & DQ_cutt_off == 1);
+
 
 
 
@@ -943,7 +950,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
                 mphplot(model, sprintf('pg%d', steps));
                 title({['f = ', num2str(Freqs(i)/1e6), ' MHz, ', '\eta = ', num2str(eta(i))], ...
                        ['PerimeterMode = ', num2str(amp_peri(i)), ', Q = ', num2str(Q(i)/1e6,3), ' x 10^6'], ...
-                       ['m_{eff} = ', num2str(m_eff(i)*1e15,3), ' pg, rl2 = ', num2str(rl2)], ...
+                       ['m_{eff} = ', num2str(m_eff(i)*1e15,3), ' pg, rl2 = ', num2str(setparamator, 5)], ...
                        ['S_F^{th} = ', num2str(S_F(i)*1e36,3), ' aN^2/Hz, DQ = ', num2str(DQ(i))]})
             end
         end

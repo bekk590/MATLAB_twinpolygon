@@ -9,21 +9,21 @@ stress = 1.1e9;
 h_mbr = 20e-9;
 N = 4;
 l0 = (700e-6)*0.4;
-N_sol = 20;
+N_sol = 50;
 
 w0 = 200e-9;
 
 
 rl1 =  1/0.4;
-rl2 = 3.2;
+rl2 = 1/0.4;
 %rl2 =  744/(700*0.4);
 
-values = 2.585:0.001:2.585;
+values = 2.510:0.01:2.710;
 %values = 2.59;
 
 %Since this is before modification, rw1 and rw2 should be the same value
-rw1 =  1/sqrt(2);
-rw2=   1/sqrt(2);
+rw1 =  1.0/sqrt(2);
+rw2=   1.0/sqrt(2);
 
 wc = 2e-6;
 lc = 700e-6;
