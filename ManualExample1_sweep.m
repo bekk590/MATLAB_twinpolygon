@@ -8,34 +8,36 @@ close all
 stress = 1.1e9;
 h_mbr = 20e-9;
 N = 4;
-l0 = (700e-6)*0.4;
-N_sol = 50;
+%l0 = (700e-6)*0.4;
+N_sol = 30;
 
-w0 = 200e-9;
+w0 = (700e-9)*sqrt(2);
 
 
-rl1 =  1/0.4;
-rl2 = 1/0.4;
+rl1 =  5;
 %rl2 =  744/(700*0.4);
+rl2 = 5;
 
-values = 2.510:0.01:2.710;
-%values = 2.59;
+values = 2.300:0.05:3.500;
+%values = 10/6;
 
 %Since this is before modification, rw1 and rw2 should be the same value
 rw1 =  1.0/sqrt(2);
 rw2=   1.0/sqrt(2);
 
-wc = 2e-6;
-lc = 700e-6;
+l0 = (150e-6)/rl1;
+w0 = (300e-9)/rw1;
 
-l_trans = 5e-6;
-l_pad = 20e-6;
-w_pad = 4e-6;
+l_trans = 50e-6;
+l_pad = 2e-6;
+w_pad = 2.5e-6;
 
 plot_flag = 1;
 plot_op_flag = 1;
 
-lc = 11.1e-6;
+
+%(wc^2)/lc = 
+lc = 10e-6;
 wc = 2.1e-6;
 
 pad_trigger = 0;%0: 2_pads, 1:4_pads

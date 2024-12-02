@@ -463,8 +463,8 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         mphgeom(model,'geom1', 'vertexlabels', 'off','facemode','off')
         zlim([-10*h_mbr,10*h_mbr])
         view(0,90)
-        xlim([-6*l0,6*l0])
-        ylim([-4*l0,4*l0])
+        xlim([-4*l0*rl1,4*l0*rl1])
+        ylim([-3*l0*rl1,3*l0*rl1])
     end
 
 
@@ -496,10 +496,10 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             y_cut = sprintf('%s + (%s - 2 * %s) * sin(%s) / 2 + %s', ...
                 y_seg{i}, l_seg{i}, dl_seg, theta_seg{i}, dy_cut);
             l_select = sprintf('%s + 1e-9', l_cut);
-            x_select_1 = sprintf('%s - %s / 2', x_cut, l_select);
-            y_select_1 = sprintf('%s - %s / 2', y_cut, l_select);
-            x_select_2 = sprintf('%s + %s / 2', x_cut, l_select);
-            y_select_2 = sprintf('%s + %s / 2', y_cut, l_select);                
+            x_select_1 = sprintf('%s - (%s / 2)', x_cut, l_select);
+            y_select_1 = sprintf('%s - (%s / 2)', y_cut, l_select);
+            x_select_2 = sprintf('%s + (%s / 2)', x_cut, l_select);
+            y_select_2 = sprintf('%s + (%s / 2)', y_cut, l_select);                
             
             for n = 1:2
                 R= ...
@@ -548,10 +548,10 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             y_cut = sprintf('%s + (%s - 2 * %s - %s / 2) * sin(%s) / 2 ', ...
                 y_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i});
             l_select = sprintf('%s + %s + 1e-9', l_clamp, l_cut);
-            x_select_1 = sprintf('%s - %s / 2', x_cut, l_select);
-            y_select_1 = sprintf('%s - %s / 2', y_cut, l_select);
-            x_select_2 = sprintf('%s + %s / 2', x_cut, l_select);
-            y_select_2 = sprintf('%s + %s / 2', y_cut, l_select);
+            x_select_1 = sprintf('%s - (%s / 2)', x_cut, l_select);
+            y_select_1 = sprintf('%s - (%s / 2)', y_cut, l_select);
+            x_select_2 = sprintf('%s + (%s / 2)', x_cut, l_select);
+            y_select_2 = sprintf('%s + (%s / 2)', y_cut, l_select);
 
 
             for n = 1:2
@@ -607,10 +607,10 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             y_cut = sprintf('%s + (%s - 2 * %s - %s) * sin(%s) / 2 - %s', ...
                 y_seg{i}, l_seg{i}, dl_seg, l_clamp, theta_seg{i}, dy_cut);
             l_select = sprintf('%s + 1e-9', l_cut);
-            x_select_1 = sprintf('%s - %s / 2', x_cut, l_select);
-            y_select_1 = sprintf('%s - %s / 2', y_cut, l_select);
-            x_select_2 = sprintf('%s + %s / 2', x_cut, l_select);
-            y_select_2 = sprintf('%s + %s / 2', y_cut, l_select);
+            x_select_1 = sprintf('%s - (%s / 2)', x_cut, l_select);
+            y_select_1 = sprintf('%s - (%s / 2)', y_cut, l_select);
+            x_select_2 = sprintf('%s + (%s / 2)', x_cut, l_select);
+            y_select_2 = sprintf('%s + (%s / 2)', y_cut, l_select);
 
             for n = 1:2
                 R= ...
@@ -868,6 +868,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     rl2_match = [];
     S_F_match = [];
     D_Q_match = [];
+    DQ_cutoff_match = [];
 
     for setparamator = values
         %model.param.set('rl2', setparamator);
@@ -893,7 +894,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
 
 
         eta = mphglobal(model, 'sqrt(maxop1(w^2)/maxop1(u^2+v^2))') > 1;
-        amp_peri = mphglobal(model, 'sqrt(maxop2(w^2)/maxop3(w^2))') > 10;
+        amp_peri = mphglobal(model, 'sqrt(maxop2(w^2)/maxop3(w^2))') > 7;
 
         ind_ip = eta < 1;
 
@@ -907,10 +908,10 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         S_F = 8 * pi * 1.38e-23 * 300 * m_eff .* Freqs ./ Q;
         DQ = W_kin ./ W_bend;
 
-        DQ_cutt_off = mphglobal(model, 'DQ') > 20;
+        DQ_cut_off = mphglobal(model, 'DQ') > 20;
 
         %ind_op = find(eta == 1);
-        ind_op = find(eta == 1 & amp_peri == 1 & DQ_cutt_off == 1);
+        ind_op = find(eta == 1 & amp_peri == 1 & DQ_cut_off == 1);
 
 
 
@@ -926,6 +927,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             rl2_match = [rl2_match; setparamator];
             S_F_match = [S_F_match; S_F(i)];
             D_Q_match = [D_Q_match; DQ(i)];
+            DQ_cutoff_match = [DQ_cutoff_match; DQ_cut_off(i)];
         end
     
 
@@ -992,7 +994,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     %end
 
 
-Periresults = table (freqs_match, eta_match, amp_peri_match, Q_match, D_Q_match, m_eff_match, rl2_match, S_F_match);
+Periresults = table (freqs_match, eta_match, amp_peri_match, DQ_cutoff_match, Q_match, D_Q_match, m_eff_match, rl2_match, S_F_match);
 figTable = figure;
 figTable.Name = sprintf('Periresults Table PadTrigger = %d', pad_trigger); 
 uitable('Data',Periresults{:,:},'ColumnName',Periresults.Properties.VariableNames,...
