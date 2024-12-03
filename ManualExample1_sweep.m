@@ -11,32 +11,32 @@ N = 4;
 %l0 = (700e-6)*0.4;
 N_sol = 30;
 
-w0 = (700e-9)*sqrt(2);
+%w0 = (700e-9)*sqrt(2);
 
 
-rl1 =  5;
+rl1 = 10/6;
 %rl2 =  744/(700*0.4);
-rl2 = 5;
+rl2 = 10/6;
 
-values = 2.300:0.05:3.500;
+values = 1.94:0.03:1.94;
 %values = 10/6;
 
 %Since this is before modification, rw1 and rw2 should be the same value
 rw1 =  1.0/sqrt(2);
 rw2=   1.0/sqrt(2);
 
-l0 = (150e-6)/rl1;
-w0 = (300e-9)/rw1;
+l0 = (700e-6)/rl1;
+w0 = (700e-9)/rw1;
 
 l_trans = 50e-6;
-l_pad = 2e-6;
+l_pad = 1e-9;
 w_pad = 2.5e-6;
 
 plot_flag = 1;
 plot_op_flag = 1;
 
 
-%(wc^2)/lc = 
+%(wc^2)/lc = ???
 lc = 10e-6;
 wc = 2.1e-6;
 

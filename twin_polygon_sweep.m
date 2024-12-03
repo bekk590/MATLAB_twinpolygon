@@ -937,6 +937,8 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     %% creating a 3D plot group
 
         steps = steps + 1;
+        disp('steps');
+        disp(steps);
         if (plot_flag && plot_op_flag) & steps ==1 
             pgsegments{steps} = model.result.create(sprintf('pg%d', steps), 'PlotGroup3D');
             pgsegments{steps}.create('surf1', 'Surface');
