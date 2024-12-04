@@ -104,6 +104,10 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     l_clamp = '(50 * h_mbr)';
     n_clamp_x = 10;
     n_clamp_y = 30;
+
+    n_center_x = fix(3*(lc/(50*h_mbr)));
+    n_center_y = fix(3*(wc/(50*h_mbr)));
+
     mesh_max = 1e-6;
     mesh_min = mesh_max/2;
     
@@ -714,8 +718,11 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         sel6.label('support area');
 
         idx_center_area = mphselectbox(model, 'geom1',...
-                    [-((rw1+rw2)*w0+Rady),-((rw1+rw2)*w0+Rady),0;...
-                     ((rw1+rw2)*w0+Rady),((rw1+rw2)*w0+Rady),0]', 'boundary');
+                    [-(lc),-(wc),0;...
+                     (lc),(wc),0]', 'boundary');
+        idx_center_edge = mphselectbox(model, 'geom1',...
+                    [-(lc),-(wc),0;...
+                     (lc),(wc),0]', 'edge');
         sel7 = model.selection.create('sel7').geom(2);
         sel7.set(idx_center_area);
         sel7.label('center area'); 
@@ -725,6 +732,29 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         sel8 = model.selection.create('sel8').geom(2);
         sel8.set(idx_polygon_area);
         sel8.label('polygon area'); 
+
+        idx_center_x = [];
+
+        for i = [1, 2]
+            box_coordinates = [((-1)^(i))*(lc/2 + 1e-9), -(wc/2 + 1e-9), 0; ((-1)^(i))*(lc/2 - 1e-9), (wc/2 + 1e-9), 0]';
+            idx = mphselectbox(model, 'geom1',box_coordinates, 'edge');    
+            idx_center_x = [idx_center_x, idx];
+        end
+
+        sel9 = model.selection.create('sel9').geom(1);
+        sel9.set(idx_center_x);
+        sel9.label('center edges x');
+
+        idx_center_y = setdiff(idx_center_edge, idx_center_x);
+
+        sel10 = model.selection.create('sel10').geom(1);
+        sel10.set(idx_center_y);
+        sel10.label('center edges y');
+
+        idx_normalmesh_area = setdiff(idx_segments_area, idx_center_area);
+        sel11 = model.selection.create('sel11').geom(2);
+        sel11.set(idx_normalmesh_area);
+        sel11.label('normalmesh_area');
 
 
 
@@ -803,14 +833,22 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     dis2 = mesh_clamp.create('dis2', 'Distribution');
     dis2.selection.set(idx_clamps_y);
     dis2.set('numelem', n_clamp_y);
+
+    mesh_coupler = mesh.create('map2', 'Map');
+    mesh_coupler.selection.set(idx_center_area);
+    dis1 = mesh_coupler.create('dis1', 'Distribution');
+    dis1.selection.set(idx_center_x);
+    dis1.set('numelem', n_center_x); 
+    dis2 = mesh_coupler.create('dis2', 'Distribution');
+    dis2.selection.set(idx_center_y);
+    dis2.set('numelem', n_center_y);
     
     ftri1 = mesh.feature.create('ftri1', 'FreeTri');
     size1 = ftri1.create('size', 'Size');
     size1.set('hmax', mesh_max);
     size1.set('hmin', mesh_min);
-    ftri1.selection.set(idx_segments_area);
+    ftri1.selection.set(idx_normalmesh_area);
    
-    
     mesh.run;
 
 %% Study
@@ -894,7 +932,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
 
 
         eta = mphglobal(model, 'sqrt(maxop1(w^2)/maxop1(u^2+v^2))') > 1;
-        amp_peri = mphglobal(model, 'sqrt(maxop2(w^2)/maxop3(w^2))') > 7;
+        amp_peri = mphglobal(model, 'sqrt(maxop2(w^2)/maxop3(w^2))') > 3;
 
         ind_ip = eta < 1;
 

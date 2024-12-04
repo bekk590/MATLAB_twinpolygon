@@ -18,8 +18,8 @@ rl1 = 10/6;
 %rl2 =  744/(700*0.4);
 rl2 = 10/6;
 
-values = 1.94:0.03:1.94;
-%values = 10/6;
+%values = 1.94:0.03:1.94;
+values = 10/6;
 
 %Since this is before modification, rw1 and rw2 should be the same value
 rw1 =  1.0/sqrt(2);
