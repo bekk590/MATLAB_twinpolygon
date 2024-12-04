@@ -101,15 +101,15 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     x_seg{1} = '(lc/4)';
     y_seg{1} = '0';
     
-    l_clamp = '(50 * h_mbr)';
+    l_clamp = '(3 * 50 * h_mbr)';
     n_clamp_x = 10;
-    n_clamp_y = 30;
-
-    n_center_x = fix(3*(lc/(50*h_mbr)));
-    n_center_y = fix(3*(wc/(50*h_mbr)));
+    n_clamp_y = 90;
+    n_center_x = fix(n_clamp_x * (lc/w0/2));
 
     mesh_max = 1e-6;
     mesh_min = mesh_max/2;
+    mesh_center_max = (mesh_max/10);
+    mesh_center_min = (mesh_min/10);
     
     clamp_lines = cell(5,1);
     clamp_linesString = cell(5,1);
@@ -356,7 +356,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         mov1.set('keep', false);
 
 
-        if pad_trigger
+        if pad_trigger == 1
 
             paramcurve3 = wp1.geom.create('pc3', 'ParametricCurve');
             paramcurve3.set('parmin', 0);
@@ -403,10 +403,13 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             uni2 = wp1.geom.create('uni2', 'Union');
             uni2.selection('input').set({'uni1', 'mov1', 'mov2'});
             uni2.set('intbnd', false);
-        else
+
+        elseif pad_trigger == 0
+
             uni2 = wp1.geom.create('uni2', 'Union');
             uni2.selection('input').set({'uni1', 'mov1'});
             uni2.set('intbnd', false);
+
         end
     end
 
@@ -416,17 +419,38 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     posy = sprintf('(((%s + %s * sin(%s) / 2) + (%s - %s * sin(%s) / 2)) / 2)', ...
         y_seg{4}, l_seg{4}, theta_seg{4}, y_seg{2}, l_seg{2}, theta_seg{2});
 
-    rotatesString{3} = sprintf('rot%i', 3);
-    rotates{3} = wp1.geom.create(rotatesString{3}, 'Rotate');
-    rotates{3}.selection('input').set('uni2');
-    rotates{3}.set('rot', '180');
-    rotates{3}.set('keep', true);
-    rotates{3}.set('pos', {posx posy});
+    if pad_trigger ~= -1
 
+        rotatesString{3} = sprintf('rot%i', 3);
+        rotates{3} = wp1.geom.create(rotatesString{3}, 'Rotate');
+        rotates{3}.selection('input').set('uni2');
+        rotates{3}.set('rot', '180');
+        rotates{3}.set('keep', true);
+        rotates{3}.set('pos', {posx posy});
     
-    uni3 = wp1.geom.create('uni3', 'Union');
-    uni3.selection('input').set({rotatesString{3}, 'uni2', segmentsString{1}, 'dif2'})
-    uni3.set('intbnd', false);
+        
+        uni3 = wp1.geom.create('uni3', 'Union');
+        uni3.selection('input').set({rotatesString{3}, 'uni2', segmentsString{1}, 'dif2'})
+        uni3.set('intbnd', false);
+    else
+        rotatesString{3} = sprintf('rot%i', 3);
+        rotates{3} = wp1.geom.create(rotatesString{3}, 'Rotate');
+        rotates{3}.selection('input').set('uni1');
+        rotates{3}.set('rot', '180');
+        rotates{3}.set('keep', true);
+        rotates{3}.set('pos', {posx posy});
+
+        rotatesString{7} = sprintf('rot%i', 7);
+        rotates{7} = wp1.geom.create(rotatesString{7}, 'Rotate');
+        rotates{7}.selection('input').set('mov1');
+        rotates{7}.set('rot', '180');
+        rotates{7}.set('keep', false);
+        rotates{7}.set('pos', {posx posy});
+
+        uni3 = wp1.geom.create('uni3', 'Union');
+        uni3.selection('input').set({rotatesString{3}, 'uni1', segmentsString{1}, 'dif2', rotatesString{7}})
+        uni3.set('intbnd', false);
+    end
 
     rotatesString{4} = sprintf('rot%i', 4);
     rotates{4} = wp1.geom.create(rotatesString{4}, 'Rotate');
@@ -733,23 +757,23 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         sel8.set(idx_polygon_area);
         sel8.label('polygon area'); 
 
-        idx_center_x = [];
+        idx_center_y = [];
 
         for i = [1, 2]
             box_coordinates = [((-1)^(i))*(lc/2 + 1e-9), -(wc/2 + 1e-9), 0; ((-1)^(i))*(lc/2 - 1e-9), (wc/2 + 1e-9), 0]';
             idx = mphselectbox(model, 'geom1',box_coordinates, 'edge');    
-            idx_center_x = [idx_center_x, idx];
+            idx_center_y = [idx_center_y, idx];
         end
 
         sel9 = model.selection.create('sel9').geom(1);
-        sel9.set(idx_center_x);
-        sel9.label('center edges x');
+        sel9.set(idx_center_y);
+        sel9.label('center edges y');
 
-        idx_center_y = setdiff(idx_center_edge, idx_center_x);
+        idx_center_x = setdiff(idx_center_edge, idx_center_y);
 
         sel10 = model.selection.create('sel10').geom(1);
-        sel10.set(idx_center_y);
-        sel10.label('center edges y');
+        sel10.set(idx_center_x);
+        sel10.label('center edges x');
 
         idx_normalmesh_area = setdiff(idx_segments_area, idx_center_area);
         sel11 = model.selection.create('sel11').geom(2);
@@ -836,17 +860,17 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
 
     mesh_coupler = mesh.create('map2', 'Map');
     mesh_coupler.selection.set(idx_center_area);
-    dis1 = mesh_coupler.create('dis1', 'Distribution');
-    dis1.selection.set(idx_center_x);
-    dis1.set('numelem', n_center_x); 
-    dis2 = mesh_coupler.create('dis2', 'Distribution');
-    dis2.selection.set(idx_center_y);
-    dis2.set('numelem', n_center_y);
+    size1 = mesh_coupler.create('size1', 'Size');
+    size1.set('hmax', mesh_center_max);
+    size1.set('hmin', mesh_center_min);
+    dis3 = mesh_coupler.create('dis3', 'Distribution');
+    dis3.selection.set(idx_center_x);
+    dis3.set('numelem', n_center_x);
     
     ftri1 = mesh.feature.create('ftri1', 'FreeTri');
-    size1 = ftri1.create('size', 'Size');
-    size1.set('hmax', mesh_max);
-    size1.set('hmin', mesh_min);
+    size2 = ftri1.create('size2', 'Size');
+    size2.set('hmax', mesh_max);
+    size2.set('hmin', mesh_min);
     ftri1.selection.set(idx_normalmesh_area);
    
     mesh.run;

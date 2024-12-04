@@ -40,8 +40,7 @@ plot_op_flag = 1;
 lc = 10e-6;
 wc = 2.1e-6;
 
-pad_trigger = 0;%0: 2_pads, 1:4_pads
-
+pad_trigger = -1;%0: 2_pads, 1:4_pads, -1: 1_pad
 
 [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
          twin_polygon_sweep(stress, h_mbr, l0, w0, N, ...
