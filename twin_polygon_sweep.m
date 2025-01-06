@@ -104,7 +104,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     l_clamp = '(3 * 50 * h_mbr)';
     n_clamp_x = 10;
     n_clamp_y = 90;
-    n_center_x = fix(n_clamp_x * (lc/w0/2));
+    n_center_x = fix(6 * (lc/w0/2));
 
     mesh_max = 1e-6;
     mesh_min = mesh_max/2;
