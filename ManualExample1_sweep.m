@@ -14,23 +14,23 @@ N_sol = 30;
 %w0 = (700e-9)*sqrt(2);
 
 
-rl1 = 10/6;
+rl1 = 0.6;
 %rl2 =  744/(700*0.4);
-rl2 = 10/6;
+rl2 = 1;
 
-%values = 1.65:0.1:1.95;
-values = 10/6;
+values = 1.00:0.1:3.00;
+%values = 1.17;
 
 %Since this is before modification, rw1 and rw2 should be the same value
-rw1 =  1.0/sqrt(2);
-rw2=   1.0/sqrt(2);
+rw1 =  sqrt(2);
+rw2=   1;
 
-l0 = (700e-6)/rl1;
-w0 = (200e-9)/rw1;
+l0 = (700e-6);
+w0 = (700e-9);
 
-l_trans = 5e-6;
-l_pad = 100e-6;
-w_pad = 1e-6;
+l_trans = 50e-6;
+l_pad = 1e-9;
+w_pad = 2.5e-6;
 
 plot_flag = 1;
 plot_op_flag = 1;
@@ -40,7 +40,7 @@ plot_op_flag = 1;
 lc = 10e-6;
 wc = 2.1e-6;
 
-pad_trigger = 1;%0: 2_pads, 1:4_pads, -1: 1_pad
+pad_trigger = -1;%0: 2_pads, 1:4_pads, -1: 1_pad
 
 [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
          twin_polygon_sweep(stress, h_mbr, l0, w0, N, ...

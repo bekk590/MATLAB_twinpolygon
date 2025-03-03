@@ -44,11 +44,11 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     %N_seg = 2^(N+1) - 1 + 2^N; % number of the segments 
     rotangle = (pi);
     %rotvalue = (2*pi/N);
-    Diameter = sqrt((l0*rl1)^2+(l0*rl2)^2);
+    Diameter = sqrt((l0)^2+(l0*rl2)^2);
     rad = Diameter/2;
     theta = (pi-rotangle)/2;
-    Radx = rad*sin(atan(max(rl1/rl2,rl2/rl1))-pi/4);
-    Rady = rad*cos(atan(max(rl1/rl2,rl2/rl1))-pi/4);
+    Radx = sign(1-rl2)*rad*sin(atan(max(1/rl2,rl2/1))-pi/4);
+    Rady = rad*cos(atan(max(1/rl2,rl2/1))-pi/4);
     segments = cell(7,1);
     segmentsString = cell(7,1);
     x_seg = cell(5,1);
@@ -64,8 +64,8 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     model.param.set('l0', sprintf('%d[m]', l0), 'Length of the fundamental segment');
     model.param.set('w0', sprintf('%d[m]', w0), 'Width of the fundamental segment');
     model.param.set('N', sprintf('%i', N), 'Number of the tops');
-    model.param.set('rl1', sprintf('%d',rl1), 'Length contraction ratio left');
-    model.param.set('rw1', sprintf('%d',rw1), 'Width expansion ratio left');
+    model.param.set('rl1', sprintf('%d',rl1), 'Length contraction ratio center');
+    model.param.set('rw1', sprintf('%d',rw1), 'Width expansion ratio tether');
     model.param.set('rl2', sprintf('%d',rl2), 'Length contraction ratio right');
     model.param.set('rw2', sprintf('%d',rw2), 'Width expansion ratio right');
     model.param.set('l_pad', sprintf('%d[m]', l_pad), 'Length of the pad');
@@ -79,13 +79,13 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     model.param.descr('rotangle', 'Angle of rotation');
     model.param.set('theta', '((pi-rotangle)/2)');
     model.param.descr('theta', 'Branching angle (radians)');
-    model.param.set('Diameter', 'sqrt((l0*rl1)^2+(l0*rl2)^2)');
+    model.param.set('Diameter', 'sqrt((l0)^2+(l0*rl2)^2)');
     model.param.descr('Diameter', 'Diameter of circumscribed circle');
     model.param.set('rad', '(Diameter/2)');
     model.param.descr('rad', 'Radius of circumscribed circle');
-    model.param.set('Radx', '(rad*sin(atan(max(rl1/rl2,rl2/rl1))-pi/4))');
+    model.param.set('Radx', '(sign(1-rl2)*rad*sin(atan(max(1/rl2,rl2/1))-pi/4))');
     model.param.descr('Radx', 'x-coordinate of polygon vertex');
-    model.param.set('Rady', '(rad*cos(atan(max(rl1/rl2,rl2/rl1))-pi/4))');
+    model.param.set('Rady', '(rad*cos(atan(max(1/rl2,rl2/1))-pi/4))');
     model.param.descr('Rady', 'y-coordinate of polygon vertex');
 
     
@@ -129,14 +129,14 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         %disp(theta_seg{ind_p});
         
         if i == 2            
-            l_seg{i} = '(l0*rl1)';
-            w_seg{i} = '(w0*rw1)';            
+            l_seg{i} = '(l0)';
+            w_seg{i} = '(w0)';            
             theta_seg{i} = sprintf('(%s + (pi/4))', theta_seg{j});
             disp(eval(theta_seg{i}));
         end
         if i == 3 || i == 5   
-            l_seg{i} = 'l0';
-            w_seg{i} = 'w0';            
+            l_seg{i} = '(l0*rl1)';
+            w_seg{i} = '(w0*rw1)';            
         
             theta_seg{i} = sprintf('(%s + (pi/4))', theta_seg{j});
             disp(eval(theta_seg{i}));
@@ -270,12 +270,12 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             clamp_lines{i_cl}.set('specify2', 'coord');
             clamp_lines{i_cl}.set('coord2', {x2_cl y2_cl});
 
-            x_bl = sprintf('%s-%s/2 * cos(%s)', x_seg{i}, l_seg{i}, theta_seg{i});
-            y_bl = sprintf('%s-%s/2 * sin(%s)', y_seg{i}, l_seg{i}, theta_seg{i});
-            x1_bl = sprintf('%s - w0/2 * sin(%s)', x_bl, theta_seg{i});
-            y1_bl = sprintf('%s - w0/2 * cos(%s)', y_bl, theta_seg{i});
-            x2_bl = sprintf('%s + w0/2 * sin(%s)', x_bl, theta_seg{i});
-            y2_bl = sprintf('%s + w0/2 * cos(%s)', y_bl, theta_seg{i});
+            x_bl = sprintf('%s - %s/2 * cos(%s)', x_seg{i}, l_seg{i}, theta_seg{i});
+            y_bl = sprintf('%s - %s/2 * sin(%s)', y_seg{i}, l_seg{i}, theta_seg{i});
+            x1_bl = sprintf('%s - %s/2 * sin(%s)', x_bl, w_seg{i}, theta_seg{i});
+            y1_bl = sprintf('%s - %s/2 * cos(%s)', y_bl, w_seg{i}, theta_seg{i});
+            x2_bl = sprintf('%s + %s/2 * sin(%s)', x_bl, w_seg{i}, theta_seg{i});
+            y2_bl = sprintf('%s + %s/2 * cos(%s)', y_bl, w_seg{i}, theta_seg{i});
             clamp_linesString{i_cl+1} = sprintf('ls%i',i_cl+1);
             clamp_lines{i_cl+1} = wp1.geom.create(clamp_linesString{i_cl+1}, 'LineSegment');
             clamp_lines{i_cl+1}.set('specify1', 'coord');
@@ -317,8 +317,8 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         paramcurve1 = wp1.geom.create('pc1', 'ParametricCurve');
         paramcurve1.set('parmin', 0);
         paramcurve1.set('parmax', 1);
-        paramcurve1.set('pos', {'-l_trans-l_pad/2' 'w0*rw1/2'});
-        paramcurve1.set('coord', {'s*l_trans' '0.5* (w_pad-w0*rw1)*(-2*s^3+3*s^2)'});
+        paramcurve1.set('pos', {'-l_trans-l_pad/2' 'w0/2'});
+        paramcurve1.set('coord', {'s*l_trans' '0.5* (w_pad-w0)*(-2*s^3+3*s^2)'});
         ls_pad = wp1.geom.create(sprintf('ls%i',6), 'LineSegment');
         ls_pad.set('specify1', 'coord');
         ls_pad.set('coord1', {'-l_pad/2' 'w_pad/2'});
@@ -327,8 +327,8 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         paramcurve2 = wp1.geom.create('pc2', 'ParametricCurve');
         paramcurve2.set('parmin', 0);
         paramcurve2.set('parmax', 1);
-        paramcurve2.set('pos', [l_trans+l_pad/2 w0*rw1/2]);
-        paramcurve2.set('coord', {'-s*l_trans' '0.5* (w_pad-w0*rw1)*(-2*s^3+3*s^2)'});
+        paramcurve2.set('pos', {'l_trans+l_pad/2' 'w0/2'});
+        paramcurve2.set('coord', {'-s*l_trans' '0.5* (w_pad-w0)*(-2*s^3+3*s^2)'});
         mir1 = wp1.geom.create('mir1', 'Mirror');
         mir1.selection('input').set({'pc1', 'pc2', sprintf('ls%i',6)});
         mir1.set('pos', [0 0]);
@@ -336,7 +336,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         mir1.set('keep', true);
         
         rec_pad = wp1.geom.create(sprintf('r%i',8), 'Rectangle');
-        rec_pad.set('size', {'l_pad+2*l_trans' 'w0*rw1'});
+        rec_pad.set('size', {'l_pad+2*l_trans' 'w0'});
         rec_pad.set('base', 'center');
         rec_pad.set('pos', [0 0]);       
         csol1 = wp1.geom.create('csol1', 'ConvertToSolid');
@@ -380,7 +380,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
             mir2.set('keep', true);
 
             rec_pad = wp1.geom.create(sprintf('r%i',9), 'Rectangle');
-            rec_pad.set('size', [l_pad+2*l_trans w0*rw2]);
+            rec_pad.set('size', {'l_pad+2*l_trans' 'w0*rw2'});
             rec_pad.set('base', 'center');
             rec_pad.set('pos', [0 0]);       
             csol2 = wp1.geom.create('csol2', 'ConvertToSolid');
@@ -491,8 +491,8 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
         mphgeom(model,'geom1', 'vertexlabels', 'off','facemode','off')
         zlim([-10*h_mbr,10*h_mbr])
         view(0,90)
-        xlim([-4*l0*rl1,4*l0*rl1])
-        ylim([-3*l0*rl1,3*l0*rl1])
+        xlim([-4*l0,4*l0])
+        ylim([-3*l0,3*l0])
     end
 
 
@@ -836,6 +836,7 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     var1.set('m_eff', 'kin_energy / ((2*pi*shell.freq)^2 * maxop1(shell.disp)^2)');
     var1.set('eta_op', 'sqrt(maxop1(w^2)/maxop1(u^2+v^2))>1');
     var1.set('amp_peri', 'sqrt(maxop2(w^2)/maxop3(w^2))>10');
+
 %% Physics
     shell = model.physics.create('shell', 'Shell', 'geom1');
     shell.feature('to1').set('d', 'h_mbr');
@@ -843,7 +844,6 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     fix1.selection.named('sel1');
     iss1 = shell.feature('emm1').create('iss1', 'InitialStressandStrain', 2);
     iss1.set('Ni', {'stress*h_mbr' '0' '0' 'stress*h_mbr'});
-
 
 
     %% Mesh
@@ -931,6 +931,8 @@ function [Freqs, Q ,m_eff, S_F, eta, rl2_match, Q_match] = ...
     S_F_match = [];
     D_Q_match = [];
     DQ_cutoff_match = [];
+
+
 
     for setparamator = values
         %model.param.set('rl2', setparamator);
@@ -1081,5 +1083,7 @@ mphsave(model, 'Practice_Resonator_twin_practice.mph')
 %eta = 1;
 %rl2_match = 1;
 %Q_match = 1;
+
+
 
 end
