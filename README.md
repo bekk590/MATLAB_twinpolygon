@@ -1,3 +1,3 @@
-MATLAB用のテストリポジトリです
+COMSOL Livelink for MATLABを用いたshellシミュレーションです
 
-更新確認1
+MATLABでCOMSOLサーバに接続した状態でManualExample1_sweep.mを実行
